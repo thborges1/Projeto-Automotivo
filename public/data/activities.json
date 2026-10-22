@@ -1,0 +1,29 @@
+[
+  {
+    "id": "preparar-bancada",
+    "title": "Preparar antes de começar",
+    "objective": "Reconhecer a função da bancada e uma conduta segura antes da prática.",
+    "questions": [
+      {
+        "prompt": "Qual componente oferece apoio inferior para guardar componentes sem ocupar o tampo?",
+        "options": [
+          "Prateleira inferior",
+          "Piso da circulação",
+          "Parte inferior da cadeira"
+        ],
+        "answer": 0,
+        "explanation": "A prateleira inferior oferece um apoio de armazenamento. O piso de circulação deve permanecer desobstruído."
+      },
+      {
+        "prompt": "Ao chegar para uma atividade prática, qual é a primeira conduta adequada?",
+        "options": [
+          "Operar a morsa imediatamente",
+          "Obter orientação do instrutor e conferir o posto",
+          "Apoiar ferramentas no caminho de passagem"
+        ],
+        "answer": 1,
+        "explanation": "A orientação do instrutor e a verificação do posto vêm antes da operação. Uma atividade virtual não substitui a supervisão presencial."
+      }
+    ]
+  }
+]

@@ -1,0 +1,48 @@
+[
+  {
+    "id": "bancada-demo",
+    "name": "Bancada didática",
+    "category": "Demonstração de organização",
+    "provisional": true,
+    "position": [
+      6,
+      0,
+      -2.4
+    ],
+    "size": [
+      2.8,
+      1.3,
+      1.1
+    ],
+    "model": null,
+    "photos": [
+      "/referencias/image.png",
+      "/referencias/image copy 4.png"
+    ],
+    "description": "Bancada com morsa aproximada a partir das fotos image.png e image copy 4.png. Dimensões e detalhes são estimados; a atividade de fundamentos foi preservada.",
+    "components": [
+      {
+        "id": "tampo",
+        "name": "Superfície de trabalho",
+        "description": "Área de apoio para componentes. Deve permanecer organizada e desobstruída."
+      },
+      {
+        "id": "morsa",
+        "name": "Morsa de bancada",
+        "description": "Dispositivo demonstrativo de fixação. Uso real depende da peça, das condições da ferramenta e da orientação do instrutor."
+      },
+      {
+        "id": "prateleira",
+        "name": "Prateleira inferior",
+        "description": "Apoio inferior para armazenar componentes sem ocupar o tampo nem a área de circulação."
+      }
+    ],
+    "operation": "Selecione um componente para destacá-lo na bancada. A demonstração de organização apresenta os pontos de apoio em sequência; não simula esforços nem operação mecânica real.",
+    "safety": [
+      "Antes da prática, solicite a orientação do instrutor e confira as condições do posto.",
+      "Mantenha as áreas de circulação livres e use os EPIs definidos para a atividade.",
+      "A simulação não autoriza operação de equipamentos reais."
+    ],
+    "activityId": "preparar-bancada"
+  }
+]

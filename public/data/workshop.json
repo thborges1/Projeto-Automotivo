@@ -1,0 +1,343 @@
+{
+  "name": "Oficina automotiva · reconstrução por referências",
+  "width": 20,
+  "depth": 30,
+  "height": 5.2,
+  "eyeHeight": 1.65,
+  "playerRadius": 0.3,
+  "spawn": [
+    0.2,
+    1.65,
+    1.4
+  ],
+  "spawnYaw": 0,
+  "walkSpeed": 3,
+  "runSpeed": 4.5,
+  "interactionDistance": 3.2,
+  "notes": "Topologia inferida por correspondências nas 16 fotografias. Medidas de trabalho estimadas; sem levantamento métrico. A ligação entre fachadas dos setores permanece uma hipótese.",
+  "reconstruction": {
+    "ridgeHeight": 7.7,
+    "skylightWidth": 1.45,
+    "frameZ": [
+      -14,
+      -8.4,
+      -2.8,
+      2.8,
+      8.4,
+      14
+    ],
+    "windowWall": "east",
+    "windowCenters": [
+      -4,
+      0,
+      4,
+      8,
+      12
+    ],
+    "windowWidth": 3.1,
+    "windowBottom": 2.15,
+    "windowHeight": 1.65,
+    "lab": {
+      "center": [
+        -3.55,
+        0,
+        1
+      ],
+      "size": [
+        4.5,
+        4.25,
+        11
+      ],
+      "confidence": "relative faces confirmed; footprint estimated"
+    },
+    "gate": {
+      "x": -7.4,
+      "z": 14.84,
+      "width": 3.8,
+      "height": 3.5
+    },
+    "vehicle": [
+      3.2,
+      0,
+      -5.2
+    ],
+    "benches": [
+      {
+        "id": "central",
+        "position": [
+          4.8,
+          0,
+          -10.2
+        ],
+        "size": [
+          2.6,
+          0.92,
+          1.1
+        ]
+      },
+      {
+        "id": "parede",
+        "position": [
+          8,
+          0,
+          -11.1
+        ],
+        "size": [
+          2.7,
+          0.92,
+          0.9
+        ]
+      }
+    ],
+    "engineStands": [
+      {
+        "position": [
+          0.8,
+          0,
+          -13.65
+        ],
+        "variant": 0
+      },
+      {
+        "position": [
+          2,
+          0,
+          -13.65
+        ],
+        "variant": 1
+      },
+      {
+        "position": [
+          3.2,
+          0,
+          -13.65
+        ],
+        "variant": 0
+      },
+      {
+        "position": [
+          4.4,
+          0,
+          -13.65
+        ],
+        "variant": 1
+      },
+      {
+        "position": [
+          5.6,
+          0,
+          -13.65
+        ],
+        "variant": 0
+      },
+      {
+        "position": [
+          6.8,
+          0,
+          -13.65
+        ],
+        "variant": 1
+      },
+      {
+        "position": [
+          8,
+          0,
+          -13.65
+        ],
+        "variant": 2
+      },
+      {
+        "position": [
+          9.2,
+          0,
+          -13.65
+        ],
+        "variant": 1
+      },
+      {
+        "position": [
+          6.6,
+          0,
+          -9
+        ],
+        "variant": 1
+      }
+    ],
+    "lifts": [
+      {
+        "position": [
+          2.6,
+          0,
+          9
+        ],
+        "color": "#c3c6c5"
+      },
+      {
+        "position": [
+          7.1,
+          0,
+          9
+        ],
+        "color": "#d8d9d2"
+      }
+    ],
+    "coveredCars": [
+      {
+        "position": [
+          -8,
+          0,
+          0
+        ],
+        "length": 4.2
+      },
+      {
+        "position": [
+          -8,
+          0,
+          5
+        ],
+        "length": 4.4
+      },
+      {
+        "position": [
+          -7.9,
+          0,
+          10.2
+        ],
+        "length": 3.8
+      }
+    ],
+    "comparisonViews": [
+      {
+        "id": "motores",
+        "photo": "image.png",
+        "position": [
+          3.3,
+          1.65,
+          1.4
+        ],
+        "target": [
+          5.2,
+          2,
+          -12.8
+        ],
+        "fov": 61,
+        "landmarks": [
+          "bancada com morsa no primeiro plano à direita",
+          "hatch à esquerda",
+          "conjuntos sob janelas",
+          "treliças e tubulação amarela"
+        ]
+      },
+      {
+        "id": "bancadas",
+        "photo": "image copy 14.png",
+        "position": [
+          3.9,
+          1.65,
+          -6.9
+        ],
+        "target": [
+          8.9,
+          1.9,
+          -12.8
+        ],
+        "fov": 57,
+        "landmarks": [
+          "fileira de motores à esquerda",
+          "bancadas cinza",
+          "quadro com persiana azul na parede branca"
+        ]
+      },
+      {
+        "id": "laboratorio",
+        "photo": "image copy 3.png",
+        "position": [
+          -6.15,
+          1.65,
+          8.4
+        ],
+        "target": [
+          -2.5,
+          2.5,
+          5
+        ],
+        "fov": 65,
+        "landmarks": [
+          "quina cinza alta",
+          "porta e janelas baixas",
+          "bancada azul na face lateral"
+        ]
+      },
+      {
+        "id": "elevadores",
+        "photo": "image copy 6.png",
+        "position": [
+          0.6,
+          1.65,
+          3.5
+        ],
+        "target": [
+          6,
+          2.3,
+          10.2
+        ],
+        "fov": 66,
+        "landmarks": [
+          "elevadores azuis",
+          "veículos claros",
+          "armários didáticos creme",
+          "janelas ao fundo/lateral"
+        ]
+      },
+      {
+        "id": "corredor",
+        "photo": "image copy 2.png",
+        "position": [
+          -8.1,
+          1.65,
+          -4
+        ],
+        "target": [
+          -7,
+          2.4,
+          14.6
+        ],
+        "fov": 57,
+        "landmarks": [
+          "veículos cobertos",
+          "parede com janelas internas",
+          "portão cinza",
+          "faixa zenital"
+        ]
+      },
+      {
+        "id": "cobertura",
+        "photo": "image copy 5.png",
+        "position": [
+          0.3,
+          1.65,
+          -1.5
+        ],
+        "target": [
+          0,
+          5.2,
+          14.7
+        ],
+        "fov": 65,
+        "landmarks": [
+          "cobertura em duas águas",
+          "faixa zenital central",
+          "luminárias lineares",
+          "portão de fundo"
+        ]
+      }
+    ],
+    "motorWindowCenters": [
+      1.6,
+      4.8,
+      8
+    ],
+    "motorWindowWidth": 2.8
+  }
+}

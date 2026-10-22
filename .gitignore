@@ -1,0 +1,5 @@
+node_modules/
+dist/
+.browser-qa/
+.browser-check/
+.browser-fidelity/

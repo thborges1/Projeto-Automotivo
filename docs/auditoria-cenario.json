@@ -1,0 +1,18 @@
+{
+  "kind": "Auditoria estrutural em CPU, sem renderização gráfica",
+  "meshes": 279,
+  "batches": 55,
+  "instances": 2339,
+  "triangles": 131624,
+  "staticDrawCallsAvoided": 656,
+  "collisionBoxes": 55,
+  "comparisonViews": 6,
+  "estimatedDimensions": {
+    "width": 20,
+    "depth": 30,
+    "eave": 5.2,
+    "ridge": 7.7
+  },
+  "screenshotsGenerated": false,
+  "fpsMeasured": false
+}

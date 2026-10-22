@@ -1,0 +1,17 @@
+{
+  "id": "montagem-roda",
+  "title": "Montagem de roda · conjunto didático",
+  "boltOrder": [0, 2, 1, 3],
+  "steps": [
+    { "id": "inspect", "title": "Inspecionar o apoio", "instruction": "Clique no cubo exposto e observe a superfície de assentamento. O conjunto está fixado em um suporte didático, sem operação de elevação.", "learning": "O cubo centraliza e apoia o conjunto da roda. A inspeção virtual prepara a identificação das superfícies de contato." },
+    { "id": "wheel", "title": "Posicionar a roda", "instruction": "Pegue a roda na bandeja 3D ou no inventário. Depois clique no encaixe destacado junto ao cubo para posicioná-la.", "learning": "A roda precisa assentar sobre o apoio antes da fixação. Pneu e aro são fornecidos como um único conjunto neste exercício." },
+    { "id": "fasteners", "title": "Iniciar as quatro fixações", "instruction": "Selecione os fixadores e clique em cada um dos quatro alojamentos. Nesta etapa o encaixe é manual e simulado, ainda sem aperto final.", "learning": "Distinguir assentamento inicial de aperto final ajuda a compreender a sequência de montagem. Não se atribui força real ao clique." },
+    { "id": "tool", "title": "Preparar a ferramenta", "instruction": "Selecione o torquímetro e ative o perfil didático. Ele representa a consulta à especificação correta, sem definir um torque real para um veículo não identificado.", "learning": "O torque depende da documentação do veículo e das condições especificadas pelo fabricante. O perfil virtual não corresponde a um valor em N·m." },
+    { "id": "tighten", "title": "Aplicar a sequência cruzada", "instruction": "Com o torquímetro selecionado, clique nos fixadores na sequência 1 → 3 → 2 → 4. Aguarde a animação de cada aplicação.", "learning": "A sequência cruzada distribui o assentamento. A animação representa a ação; não calcula torque, deformação, atrito ou resistência de materiais." },
+    { "id": "verify", "title": "Conferir o conjunto", "instruction": "Clique no centro da roda para conferir o assentamento e as quatro fixações concluídas. A conferência encerra a prática virtual.", "learning": "Montar inclui conferir. Na prática real, inspeção, procedimento e liberação devem ser acompanhados pelo instrutor." }
+  ],
+  "references": [
+    { "title": "Continental · Retorquing wheels", "url": "https://www.continental-tires.com/tire-knowledge/retorquing-wheels/" },
+    { "title": "Wheel Pros · Torque specifications", "url": "https://helpcenter.wheelpros.com/hc/en-us/articles/43488732257293-What-are-the-torque-specifications-for-my-wheel-lug-nuts" }
+  ]
+}
