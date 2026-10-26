@@ -16,7 +16,7 @@ export class AppUI {
       <div id="hud" class="hidden">
         <header class="hud-top"><div class="area-tag"><span class="red-dot"></span><div>OFICINA AUTOMOTIVA<small>Referências reais · medidas estimadas</small></div></div><div class="hud-actions"><button id="help" aria-label="Ajuda">?</button><button id="fullscreen" aria-label="Alternar tela cheia">⛶</button><button id="pause" aria-label="Pausar">Ⅱ</button></div></header>
         <div id="objective" class="objective"></div><div class="crosshair" aria-hidden="true"></div>
-        <button id="interact" class="interact hidden"><span class="key">E</span><span><strong id="target-name"></strong><small>Conhecer equipamento · demonstração</small></span></button>
+        <button id="interact" class="interact hidden"><span class="key">E</span><span><strong id="target-name"></strong><small id="target-action">Conhecer equipamento · demonstração</small></span></button>
         <div class="hud-bottom"><span id="mode-label">EXPLORAÇÃO LIVRE</span><span class="desktop-hint">W A S D · mover &nbsp; Mouse · olhar &nbsp; ESC · pausar</span><span id="progress-label"></span></div>
         <div id="mobile-controls"><div id="look-zone" aria-label="Arraste para olhar"></div><div id="joystick" aria-label="Joystick de movimento"><div id="stick"></div></div><span class="touch-tip">Arraste à direita para olhar</span></div>
       </div>
@@ -36,6 +36,15 @@ export class AppUI {
     });
   }
   show(id, value = true) { this.$(id).classList.toggle('hidden', !value); }
+  updateInteraction(target, active) {
+    this.show('interact', Boolean(target) && active);
+    if (!target || !active) return;
+    const name = this.$('target-name');
+    const action = this.$('target-action');
+    const label = target.data.type === 'lift' ? target.actionLabel : 'Conhecer equipamento · demonstração';
+    if (name.textContent !== target.data.name) name.textContent = target.data.name;
+    if (action.textContent !== label) action.textContent = label;
+  }
   bind(id, fn) { this.$(id).addEventListener('click', fn); }
   toast(message) { clearTimeout(this.toastTimer); this.$('toast').textContent = message; this.show('toast'); this.toastTimer = setTimeout(() => this.show('toast', false), 6000); }
   modal(title, body) {

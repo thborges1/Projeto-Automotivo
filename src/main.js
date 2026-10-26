@@ -101,6 +101,10 @@ function startAssembly() {
 function openEquipment() {
   if (state !== 'playing' || !interaction.current) return;
   const item = interaction.current;
+  if (item.data.type === 'lift') {
+    if (item.activate()) audio.play();
+    return;
+  }
   if (item.data.type === 'assembly') { startAssembly(); return; }
   setState('panel'); engine.focus(item); item.setHighlight(true);
   panel.open(item, activities.find(a => a.id === item.data.activityId));
@@ -122,6 +126,7 @@ async function boot() {
     panel = new EquipmentPanel(ui, progress, audio, () => { panel.close(); setState('paused'); showPause(); }, () => { guideStep = 2; refreshProgress(); });
     for (const data of equipment) await engine.registry.register(data, message => ui.toast(message));
     engine.registry.attach(new VehicleStation(engine.world.vehicle));
+    for (const lift of engine.world.lifts) engine.registry.attach(lift);
     assembly = new AssemblySession(engine, ui, assemblyDefinition, progress, audio, () => {
       setState('paused'); refreshProgress(); showPause('Prática encerrada. Você pode retomar a exploração ou voltar ao menu.');
     });
@@ -148,8 +153,7 @@ async function boot() {
     engine.start(dt => {
       assembly.update(dt);
       const target = interaction.update(state === 'playing');
-      ui.show('interact', Boolean(target) && state === 'playing');
-      if (target) ui.$('target-name').textContent = target.data.name;
+      ui.updateInteraction(target, state === 'playing');
     });
     ui.show('loading', false); home();
     window.addEventListener('pagehide', () => { assembly.dispose(); engine.dispose(); audio.dispose(); });

@@ -69,3 +69,75 @@ test('poses comparativas estão dentro da sala e fora de obstáculos', () => {
     assert.ok(readFileSync(new URL(`../public/referencias/${view.photo}`, import.meta.url)).length > 0);
   }
 });
+
+test('elevadores mantêm carros e braços juntos após batching e ciclos completos', () => {
+  const { world } = build();
+  assert.equal(world.lifts.length, config.reconstruction.lifts.length);
+  for (const lift of world.lifts) {
+    const car = lift.group.getObjectByName('veiculo-didatico-estimado');
+    const arm = lift.group.children.find(o => o.name.includes('braço'));
+    assert.ok(car && arm);
+    let carDraws = 0;
+    let triangles = 0;
+    car.traverse(o => {
+      if (!o.isMesh) return;
+      carDraws++;
+      triangles += (o.geometry.index?.count ?? o.geometry.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1);
+      assert.equal(o.userData.static, false);
+      assert.equal(o.material.transparent, false);
+      assert.equal(o.material.isMeshPhysicalMaterial, undefined);
+    });
+    assert.ok(carDraws <= 12, `Carro do elevador usa ${carDraws} desenhos`);
+    // Budget includes undercarriage, rounded tires, five-spoke rims and trim.
+    assert.ok(triangles < 9000, `Carro do elevador usa ${triangles} triângulos`);
+    const bounds = new THREE.Box3().setFromObject(car);
+    const carY = car.getWorldPosition(new THREE.Vector3()).y;
+    const armY = arm.getWorldPosition(new THREE.Vector3()).y;
+    assert.equal(lift.activate(), true);
+    assert.equal(lift.activate(), false);
+    lift.advance(NaN);
+    assert.equal(lift.height, 0);
+    for (let i = 0; i < 120; i++) lift.advance(1 / 60);
+    assert.ok(Math.abs(lift.height - 0.9) < 1e-9);
+    lift.advance(2.1);
+    assert.equal(lift.height, 1.8);
+    assert.equal(lift.moving, false);
+    world.root.updateMatrixWorld(true);
+    const raisedBounds = new THREE.Box3().setFromObject(car);
+    assert.ok(Math.abs(raisedBounds.min.y - bounds.min.y - 1.8) < 1e-6);
+    assert.ok(Math.abs(raisedBounds.max.y - bounds.max.y - 1.8) < 1e-6);
+    assert.ok(Math.abs(car.getWorldPosition(new THREE.Vector3()).y - carY - 1.8) < 1e-9);
+    assert.ok(Math.abs(arm.getWorldPosition(new THREE.Vector3()).y - armY - 1.8) < 1e-9);
+    assert.equal(lift.activate(), true);
+    lift.advance(4);
+    assert.equal(lift.height, 0);
+    assert.equal(car.getWorldPosition(new THREE.Vector3()).y, carY);
+    assert.equal(lift.moving, false);
+  }
+});
+
+test('carro elevado libera passagem e visão sob ele, preservando colisão das colunas', () => {
+  const { world, collision } = build();
+  for (const [i, lift] of world.lifts.entries()) {
+    const [x, , z] = config.reconstruction.lifts[i].position;
+    const start = new THREE.Vector3(x, config.eyeHeight, z + 2.6);
+    const end = new THREE.Vector3(x, config.eyeHeight, z - 2.6);
+    assert.equal(collision.blocked(x, z), true);
+    assert.equal(collision.lineBlocked(start, end), true);
+    lift.activate(); lift.advance(2);
+    assert.equal(collision.blocked(x, z), true);
+    lift.advance(2);
+    assert.equal(collision.blocked(x, z), false);
+    assert.equal(collision.lineBlocked(start, end), false);
+    for (const side of [-1, 1]) {
+      assert.equal(collision.blocked(x + side * 1.12, z + 0.5), false);
+      assert.equal(collision.blocked(x + side * 1.57, z), true);
+    }
+    const player = start.clone();
+    collision.move(player, 0, -5.2);
+    assert.ok(Math.abs(player.z - end.z) < 1e-6);
+    lift.activate(); lift.advance(4);
+    assert.equal(collision.blocked(x, z), true);
+    assert.equal(collision.lineBlocked(start, end), true);
+  }
+});

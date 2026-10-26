@@ -58,6 +58,7 @@ export class Engine {
       if (document.hidden) return;
       this.controls.update(dt);
       this.world.vehicle.update(dt);
+      for (const lift of this.world.lifts) lift.advance(dt);
       for (const item of this.registry.items.values()) item.update(ms / 1000);
       onFrame(dt);
       this.renderer.render(this.scene, this.camera);

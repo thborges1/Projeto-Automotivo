@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { createUndercarriage } from './Undercarriage.js';
+import { createVehicleExterior } from './VehicleExterior.js';
 
 const metal = new THREE.MeshStandardMaterial({ color: '#a9afb0', roughness: 0.32, metalness: 0.8 });
 const rubber = new THREE.MeshStandardMaterial({ color: '#252628', roughness: 0.93 });
@@ -13,8 +15,22 @@ export function cylinder(radius, depth, material, position, parent, segments = 4
   const m = mesh(new THREE.CylinderGeometry(radius, radius, depth, segments), material, position, parent); m.rotation.x = Math.PI / 2; return m;
 }
 
-export function createWheel() {
+export function createWheel(simple = false) {
   const group = new THREE.Group();
+  if (simple) {
+    const tire = mesh(new THREE.TorusGeometry(0.3, 0.095, 6, 24), rubber, [0, 0, 0], group);
+    tire.scale.z = 1.3;
+    cylinder(0.215, 0.16, black, [0, 0, 0], group, 16);
+    mesh(new THREE.TorusGeometry(0.205, 0.016, 4, 20), metal, [0, 0, 0.1], group);
+    for (let i = 0; i < 5; i++) {
+      const angle = i / 5 * Math.PI * 2;
+      const spoke = mesh(new THREE.BoxGeometry(0.045, 0.145, 0.025), metal,
+        [Math.sin(angle) * 0.12, Math.cos(angle) * 0.12, 0.1], group);
+      spoke.rotation.z = -angle;
+    }
+    cylinder(0.062, 0.04, metal, [0, 0, 0.12], group, 10);
+    return group;
+  }
   const tire = mesh(new THREE.TorusGeometry(0.302, 0.093, 14, 56), rubber, [0, 0, 0], group);
   tire.scale.z = 1.35;
   cylinder(0.225, 0.15, black, [0, 0, 0.015], group);
@@ -39,12 +55,22 @@ export function createWheel() {
 
 export class Vehicle {
   constructor(position = [5.2, 0, -3], options = {}) {
+    const displayOnly = options.displayOnly === true;
+    const round = (size, material, pos, parent, radius = 0.05) => mesh(
+      new RoundedBoxGeometry(...size, 1, radius), material, pos, parent);
+    const bodyPaint = color => displayOnly
+      ? new THREE.MeshStandardMaterial({ color, roughness: 0.5, metalness: 0.18 }) : paint(color);
     this.group = new THREE.Group(); this.group.position.set(...position);
     this.group.name = 'veiculo-didatico-estimado';
     this.group.userData.dynamic = !options.color;
-    const orange = paint(options.color || '#347d94'), cream = orange, red = orange, turquoise = black;
-    const glass = new THREE.MeshPhysicalMaterial({ color: '#425b60', metalness: 0.2, roughness: 0.18, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
+    const orange = bodyPaint(options.color || '#347d94'), cream = orange, red = orange, turquoise = black;
+    const glass = displayOnly
+      ? new THREE.MeshStandardMaterial({ color: '#425b60', metalness: 0.2, roughness: 0.3, side: THREE.DoubleSide })
+      : new THREE.MeshPhysicalMaterial({ color: '#425b60', metalness: 0.2, roughness: 0.18, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
     round([3.85, 0.36, 1.56], black, [0, 0.51, 0], this.group);
+    this.undercarriage = createUndercarriage({ metal, black, rubber });
+    this.group.add(this.undercarriage);
+    this.group.add(createVehicleExterior({ body: orange, trim: black, metal, glass }));
     // Flancs extrudés avec véritables passages de roue, pas de cube posé sur quatre roues.
     const profile = new THREE.Shape();
     profile.moveTo(-1.95, 0.48); profile.lineTo(-1.97, 0.88);
@@ -52,7 +78,7 @@ export class Vehicle {
     profile.quadraticCurveTo(1.92, 1.1, 1.95, 0.9); profile.lineTo(1.95, 0.48); profile.lineTo(1.72, 0.48);
     profile.bezierCurveTo(1.72, 1.03, 0.7, 1.03, 0.7, 0.48); profile.lineTo(-0.73, 0.48);
     profile.bezierCurveTo(-0.73, 1.03, -1.75, 1.03, -1.75, 0.48); profile.closePath();
-    const bodyGeometry = new THREE.ExtrudeGeometry(profile, { depth: 0.065, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.02, bevelSegments: 2, curveSegments: 16 });
+    const bodyGeometry = new THREE.ExtrudeGeometry(profile, { depth: 0.065, bevelEnabled: true, bevelSize: 0.025, bevelThickness: 0.02, bevelSegments: displayOnly ? 1 : 2, curveSegments: displayOnly ? 6 : 16 });
     for (const side of [-1, 1]) {
       mesh(bodyGeometry, orange, [0, 0, side > 0 ? 0.76 : -0.825], this.group);
       round([1.4, 0.36, 0.035], cream, [-0.15, 0.87, side * 0.81], this.group, 0.08);
@@ -70,12 +96,13 @@ export class Vehicle {
     const roofShape = new THREE.Shape();
     roofShape.moveTo(-0.5, 1.65); roofShape.quadraticCurveTo(0.18, 1.85, 0.95, 1.65);
     roofShape.lineTo(0.94, 1.72); roofShape.quadraticCurveTo(0.2, 1.94, -0.5, 1.72); roofShape.closePath();
-    mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 1.3, bevelEnabled: true, bevelSize: 0.055, bevelThickness: 0.055, bevelSegments: 5 }), orange, [0, 0, -0.65], this.group);
+    mesh(new THREE.ExtrudeGeometry(roofShape, { depth: 1.3, bevelEnabled: true, bevelSize: 0.055, bevelThickness: 0.055, bevelSegments: displayOnly ? 1 : 5, curveSegments: displayOnly ? 6 : 12 }), orange, [0, 0, -0.65], this.group);
     const windshield = round([0.035, 0.72, 1.37], glass, [-0.7, 1.43, 0], this.group, 0.015); windshield.rotation.z = -0.81;
     const rearGlass = round([0.035, 0.7, 1.37], glass, [1.15, 1.43, 0], this.group, 0.015); rearGlass.rotation.z = 0.78;
     round([0.38, 0.4, 1.52], red, [1.79, 0.88, 0], this.group, 0.16);
     round([0.85, 0.12, 1.48], orange, [1.48, 1.08, 0], this.group, 0.055);
-    for (const side of [-1, 1]) round([0.08, 0.22, 0.25], paint('#a92320'), [2.01, 1.02, side * 0.59], this.group, 0.04);
+    const tailPaint = bodyPaint('#a92320');
+    for (const side of [-1, 1]) round([0.08, 0.22, 0.25], tailPaint, [2.01, 1.02, side * 0.59], this.group, 0.04);
     round([0.22, 0.23, 1.65], turquoise, [1.98, 0.59, 0], this.group, 0.08);
     round([0.21, 0.23, 1.65], black, [-1.99, 0.59, 0], this.group, 0.06);
     this.headlightMaterial = new THREE.MeshStandardMaterial({ color: '#e5f3ff', emissive: '#c8e9ff', emissiveIntensity: 0.05, roughness: 0.15 });
@@ -88,6 +115,21 @@ export class Vehicle {
     round([0.12, 0.15, 0.55], black, [-2.02, 0.79, 0], this.group);
     this.hood = new THREE.Group(); this.hood.position.set(-0.94, 1.08, 0); this.group.add(this.hood);
     round([1.09, 0.12, 1.5], orange, [-0.51, -0.01, 0], this.hood, 0.055);
+    if (displayOnly) {
+      for (const x of [-1.24, 1.21]) for (const side of [-1, 1]) {
+        const wheel = createWheel(true);
+        wheel.position.set(x, 0.4, side * 0.84);
+        if (side < 0) wheel.rotation.y = Math.PI;
+        this.group.add(wheel);
+      }
+      this.group.traverse(o => {
+        if (!o.isMesh) return;
+        o.userData.static = true;
+        // Windows do not cast solid shadows onto the body below them.
+        if (o.material === glass) o.castShadow = false;
+      });
+      return;
+    }
     this.engine = new THREE.Group(); this.engine.position.set(-1.4, 0.8, 0); this.group.add(this.engine);
     round([0.6, 0.35, 0.65], metal, [0, 0, 0], this.engine);
     round([0.63, 0.08, 0.38], black, [0, 0.21, 0], this.engine);
@@ -118,7 +160,7 @@ export class Vehicle {
     cylinder(0.055, 0.11, metal, [0, 0, 0.03], this.hubGroup);
     round([0.09, 0.18, 0.09], paint('#7b7d70'), [0.155, 0.03, -0.02], this.hubGroup, 0.025);
     // Suporte fixo didático sob o eixo. Não é um elevador operável.
-    for (const side of [-1, 1]) {
+    for (const side of options.color ? [] : [-1, 1]) {
       round([0.36, 0.045, 0.45], black, [-1.24, 0.025, side * 0.5], this.group);
       round([0.13, 0.31, 0.13], metal, [-1.24, 0.2, side * 0.5], this.group);
     }

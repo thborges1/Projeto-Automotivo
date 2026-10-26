@@ -12,7 +12,7 @@ export function createWorkshop(scene, collision, config) {
   const materials = createMaterials(config);
   const kit = buildArchitecture(root, materials, collision, config);
   buildLaboratory(root, materials, collision, config);
-  buildWorkshopProps(root, kit, materials, collision, config);
+  const lifts = buildWorkshopProps(root, kit, materials, collision, config);
   const lights = createLighting(scene, kit, materials, config);
   const vehicle = new Vehicle(config.reconstruction.vehicle); root.add(vehicle.group);
   const [vx, , vz] = config.reconstruction.vehicle;
@@ -43,5 +43,5 @@ export function createWorkshop(scene, collision, config) {
   root.traverse(o => { if (o.material === materials.window || o.material === materials.skylight || o.material === materials.interiorGlass) o.castShadow = false; });
   kit.flush();
   const savedDrawCalls = batchStaticWorld(root);
-  return { root, exterior, materials, lights, vehicle, savedDrawCalls };
+  return { root, exterior, materials, lights, vehicle, lifts, savedDrawCalls };
 }

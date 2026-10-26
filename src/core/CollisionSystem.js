@@ -7,12 +7,15 @@ export class CollisionSystem {
   }
 
   addBox(x, z, width, depth, id = '') {
-    this.boxes.push({ minX: x - width / 2, maxX: x + width / 2,
-      minZ: z - depth / 2, maxZ: z + depth / 2, id });
+    const box = { minX: x - width / 2, maxX: x + width / 2,
+      minZ: z - depth / 2, maxZ: z + depth / 2, id, enabled: true };
+    this.boxes.push(box);
+    return box;
   }
 
   blocked(x, z) {
     return this.boxes.some((b) => {
+      if (b.enabled === false) return false;
       const dx = x - Math.max(b.minX, Math.min(x, b.maxX));
       const dz = z - Math.max(b.minZ, Math.min(z, b.maxZ));
       return dx * dx + dz * dz < this.radius * this.radius;
@@ -34,7 +37,7 @@ export class CollisionSystem {
       const t = i / count;
       const x = start.x + (end.x - start.x) * t;
       const z = start.z + (end.z - start.z) * t;
-      if (this.boxes.some(b => b.id !== ignoredId && x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ)) return true;
+      if (this.boxes.some(b => b.enabled !== false && b.id !== ignoredId && x > b.minX && x < b.maxX && z > b.minZ && z < b.maxZ)) return true;
     }
     return false;
   }

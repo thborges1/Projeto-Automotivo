@@ -1,8 +1,11 @@
 import * as THREE from 'three';
 import { Vehicle } from '../objects/Vehicle.js';
+import { VehicleLift } from '../objects/VehicleLift.js';
+import { batchStaticWorld } from './StaticBatching.js';
 
 export function buildWorkshopProps(root, kit, m, collision, config) {
   const { box, repeat, beam, pipe } = kit, r = config.reconstruction;
+  const lifts = [];
   const wheels = new THREE.CylinderGeometry(0.055, 0.055, 0.035, 10);
   const cylinderGeo = new THREE.CylinderGeometry(1, 1, 1, 20);
   function cylinder(name, radius, length, pos, material, axis = 'y') {
@@ -62,6 +65,8 @@ export function buildWorkshopProps(root, kit, m, collision, config) {
   }
   // Dois postos de elevação visíveis nas fotos 6/7. Apenas cenográficos.
   for (const { position: [x, , z], color } of r.lifts) {
+    const moving = new THREE.Group(); root.add(moving);
+    const colliders = [];
     for (const side of [-1, 1]) {
       const px = x + side * 1.57;
       box('base de elevador azul', [0.58, 0.065, 0.7], [px, 0.035, z], m.liftBlue);
@@ -71,11 +76,24 @@ export function buildWorkshopProps(root, kit, m, collision, config) {
       for (const direction of [-1, 1]) {
         const arm = box('braço recolhido do elevador', [1.0, 0.09, 0.15], [px - side * 0.45, 0.16, z + direction * 0.5], m.liftBlue);
         arm.rotation.y = side * direction * 0.5;
-        collision.addBox(px - side * 0.45, z + direction * 0.5, 0.95, 0.65, 'braço baixo do elevador');
+        moving.attach(arm);
+        const pad = box('apoio de borracha do elevador', [0.18, 0.15, 0.22], [x + side * 0.72, 0.28, z + direction * 0.72], m.rubber);
+        moving.attach(pad);
+        colliders.push(collision.addBox(px - side * 0.45, z + direction * 0.5, 0.95, 0.65, 'braço baixo do elevador'));
       }
     }
-    const car = new Vehicle([x, 0, z], { color }); car.group.rotation.y = Math.PI / 2; root.add(car.group);
-    collision.addBox(x, z, 2.02, 4.3, 'veículo claro aproximado');
+    const car = new Vehicle([x, 0, z], { color, displayOnly: true });
+    // Consolidate within the car: batches then travel with the lift instead
+    // of becoming hundreds of separate draws or being baked into the room.
+    batchStaticWorld(car.group);
+    car.group.rotation.y = Math.PI / 2; root.add(car.group);
+    moving.attach(car.group);
+    moving.traverse(o => { o.userData.static = false; });
+    moving.userData.dynamic = true;
+    const button = box('bot?o do elevador', [0.22, 0.22, 0.12], [x - 1.57, 1.22, z + 0.25], m.green.clone());
+    button.userData.static = false;
+    colliders.push(collision.addBox(x, z, 2.02, 4.3, 'veículo claro aproximado'));
+    const lift = new VehicleLift(lifts.length + 1, moving, button, colliders, config.eyeHeight + 0.1); lifts.push(lift);
     // Carrinho didático creme em primeiro plano, foto 6.
     const cabinetZ = z - 3.4;
     box('armário didático creme', [1.05, 1.5, 0.5], [x + 0.25, 0.86, cabinetZ], m.cream, true);
@@ -127,6 +145,7 @@ export function buildWorkshopProps(root, kit, m, collision, config) {
     box('eletrocalha transversal', [config.width - 0.5, 0.045, 0.25], [0, 4.55, z], m.frame);
     for (let x = -9.5; x < 9.5; x += 0.16) repeat([0.025, 0.06, 0.27], [x, 4.58, z], m.frame);
   }
+  return lifts;
 }
 
 export function coveredCar(length, material, wheelMaterial) {
