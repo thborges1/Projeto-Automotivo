@@ -1,5 +1,7 @@
 # SENAI Automotivo 3D
 
+**Oficina prática:** entre em **Mexer no carro** e escolha Roda, Filtro de ar, Bateria ou Luzes. Os novos serviços permitem abrir a caixa e substituir o filtro, conectar as duas pontas de prova e ler uma tensão simulada, além de acender faróis e testar o pisca-alerta. Clique nos alvos do carro ou use os botões de ação. O progresso dos quatro serviços fica salvo. A carroceria recebeu pintura azul-petróleo uniforme, teto curvo e acabamentos arredondados. As instruções da montagem foram reduzidas; a explicação permanece recolhida.
+
 **Revisão 03 — reconstrução por fotografias:** cobertura em duas águas com faixa zenital, laboratório com aberturas, reorganização dos setores de motores/elevadores/corredor, materiais e iluminação revistos. Consulte o [relatório de reconstrução](docs/reconstrucao-03.md) e o [mapa estimado](docs/planta-estimada.svg). Medidas e ligação entre setores ainda não foram aferidas; a fidelidade renderizada não foi validada nesta sessão.
 
 Para comparar no navegador, abra **http://localhost:5173/comparacao.html** (use a porta real informada pelo Vite). Há seis poses aproximadas, sobreposição da fotografia, ajuste de FOV e exportação de PNG/pose JSON. A exportação visual ainda precisa ser conferida em navegador. `npm run audit` gera o mapa e a auditoria estrutural sem WebGL; não produz capturas nem mede FPS.

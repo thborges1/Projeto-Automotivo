@@ -7,7 +7,7 @@ export class AppUI {
         <header class="brand"><span class="brand-mark">A<span>3D</span></span><div>EDUCAÇÃO PROFISSIONAL<small>Caxias do Sul · RS</small></div><span class="version">RECONSTRUÇÃO 03</span></header>
         <div class="home-content"><div class="eyebrow"><i></i> EXPLORE. IDENTIFIQUE. APRENDA.</div><h1 id="title">SENAI<br>Automotivo <em>3D</em></h1><p class="subtitle">Ambiente Virtual de Aprendizagem</p><p class="intro">O primeiro contato com a oficina<br>começa antes da prática.</p>
         <button id="enter" class="primary big">Entrar na Oficina <span>↗</span></button>
-        <button id="practice" class="practice-entry">Montar no carro <span>PRÁTICA 3D →</span></button>
+        <button id="practice" class="practice-entry">Mexer no carro <span>PRÁTICA 3D →</span></button>
         <nav class="home-nav" aria-label="Menu principal"><button id="how">Como jogar</button><button id="activities">Atividades <span class="count">02</span></button><button id="settings">Configurações</button></nav>
         <div class="progress-home" id="home-progress"></div></div>
         <div class="scene-caption"><span class="caption-line"></span><small>01 / OFICINA AUTOMOTIVA</small><p>Um espaço para conhecer.<br>Um caminho para aprender.</p><span class="badge">AMBIENTE PROVISÓRIO</span></div>
@@ -52,7 +52,13 @@ export class AppUI {
   updateProgress(progress) {
     const result = progress.data.completed['preparar-bancada'];
     const practice = progress.data.completed['montagem-roda'];
-    this.$('home-progress').textContent = practice ? `✓ Montagem de roda concluída · aproveitamento ${practice.score}%` : result ? `✓ Fundamentos da bancada · ${result.score}/${result.total} respostas corretas` : 'Monte no veículo 3D. Seu progresso fica salvo neste navegador.';
+    const services = Number(Boolean(practice)) + ['filter', 'battery', 'lights'].filter(id => progress.data.completed[`servico-${id}`]).length;
+    if (services) {
+      this.$('home-progress').textContent = `✓ ${services}/4 práticas concluídas no carro`;
+      this.$('progress-label').textContent = `OFICINA ${services}/4`;
+      return;
+    }
+    this.$('home-progress').textContent = practice ? `✓ Montagem de roda concluída · aproveitamento ${practice.score}%` : result ? `✓ Fundamentos da bancada · ${result.score}/${result.total} respostas corretas` : 'Roda, filtro, bateria e luzes: escolha o que fazer no carro.';
     this.$('progress-label').textContent = practice ? `MONTAGEM ${practice.score}%` : 'PRÁTICA 3D + BANCADA';
   }
 }

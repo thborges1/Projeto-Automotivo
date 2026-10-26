@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { createWheel, cylinder } from '../objects/Vehicle.js';
 import { AssemblyActivity } from '../education/AssemblyActivity.js';
+import { ServiceActivity, jobs } from '../education/ServiceActivity.js';
 
 const itemNames = { wheel: 'Conjunto pneu + aro', fastener: 'Fixadores · 4 unidades', torque: 'Torquímetro didático', impact: 'Chave de impacto' };
 
@@ -14,7 +15,7 @@ export class AssemblySession {
     this.raycaster = new THREE.Raycaster(); this.pointer = new THREE.Vector2();
     this.stage = new THREE.Group(); this.stage.name = 'pratica-roda'; engine.scene.add(this.stage);
     this.targets = []; this.boltTargets = []; this.partPickers = [];
-    this.buildStage(); this.createUI();
+    this.buildStage(); this.buildServiceTargets(); this.createUI();
     this.onDown = e => { if (this.active) this.down = { x: e.clientX, y: e.clientY, time: performance.now() }; };
     this.onUp = e => {
       if (!this.active || !this.down || e.button !== 0) return;
@@ -61,6 +62,72 @@ export class AssemblySession {
     this.tool.visible = false; this.stage.add(this.tool);
     const trayTitle = this.makeLabel('BANDEJA DE PEÇAS'); trayTitle.position.set(hub.x - 1.05, 0.55, hub.z + 1.65); trayTitle.scale.set(1.5, 0.18, 1); this.stage.add(trayTitle);
   }
+  buildServiceTargets() {
+    this.serviceTargets = new THREE.Group(); this.serviceTargets.visible = false; this.engine.scene.add(this.serviceTargets);
+    this.serviceMarkers = {};
+    const positions = { cover: [-1.42, 1.18, 0.43], filter: [-1.42, 1.15, 0.43], positive: [-1.32, 1.2, -0.46], negative: [-1.58, 1.2, -0.46], meter: [-1.48, 1.55, -0.46], headlights: [-2.08, 0.95, 0.5], hazards: [-2.08, 0.74, 0.65], off: [-2.08, 0.95, 0.5] };
+    const labels = { cover: 'TAMPA', filter: 'FILTRO', positive: '+ VERMELHA', negative: '− PRETA', meter: '12,6 V · SIMULADO', headlights: 'FARÓIS', hazards: 'PISCA-ALERTA', off: 'DESLIGAR' };
+    for (const [id, position] of Object.entries(positions)) {
+      const marker = this.makeLabel(labels[id]); marker.position.copy(this.vehicle.group.position).add(new THREE.Vector3(...position)); marker.scale.set(id === 'meter' ? 0.9 : 0.65, 0.13, 1);
+      marker.userData.service = id; this.serviceTargets.add(marker); this.serviceMarkers[id] = marker;
+    }
+    this.probes = [];
+    for (const [i, color] of ['#ed5448', '#a3b7c4'].entries()) {
+      const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.25, 12), new THREE.MeshStandardMaterial({ color }));
+      probe.position.copy(this.vehicle.group.position).add(new THREE.Vector3(i === 0 ? -1.32 : -1.58, 1.3, -0.46));
+      probe.rotation.z = i === 0 ? -0.3 : 0.3; probe.visible = false; this.serviceTargets.add(probe); this.probes.push(probe);
+    }
+  }
+  chooseJob(id) {
+    if (this.busy) return;
+    this.job = id;
+    this.service = id === 'wheel' ? null : new ServiceActivity(id);
+    this.vehicle.filterCoverLift = 0; this.vehicle.filterLift = 0; this.vehicle.filter.visible = true;
+    this.vehicle.filter.material.color.set('#c9b48a');
+    this.vehicle.lightsOn = false; this.vehicle.hazardsOn = false;
+    this.probes.forEach(p => p.visible = false);
+    this.activity.reset(); this.syncMeshes(); this.render(); this.ui.show('assembly-result', false);
+    this.stage.visible = id === 'wheel'; this.serviceTargets.visible = id !== 'wheel';
+    this.vehicle.setHood(id === 'filter' || id === 'battery');
+    this.ui.$('assembly-hood').textContent = this.vehicle.hoodOpen ? 'Fechar capô' : 'Abrir capô';
+    this.ui.$('assembly-hood').setAttribute('aria-pressed', String(this.vehicle.hoodOpen));
+    this.ui.$('assembly').querySelectorAll('[data-job]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.job === id)));
+    this.ui.$('assembly').classList.toggle('service-mode', id !== 'wheel');
+    this.ui.$('assembly').querySelector('.assembly-header h2').textContent = id === 'wheel' ? 'Oficina prática' : jobs[id].title;
+    this.focus(id !== 'wheel');
+    this.feedback(id === 'wheel' ? 'Clique no cubo destacado.' : 'Clique na peça destacada no carro.', true);
+  }
+  serviceAct(target) {
+    if (!this.active || !this.service || !this.service.perform(target)) return;
+    const step = this.service.step;
+    if (this.job === 'filter') {
+      this.vehicle.filterCoverLift = step < 4 ? 0.45 : 0;
+      this.vehicle.filter.visible = step !== 2;
+      if (step === 3) this.vehicle.filter.material.color.set('#f0d8a0');
+    }
+    if (this.job === 'battery') this.probes.forEach((p, i) => p.visible = step > i && step < 3);
+    if (this.job === 'lights') { this.vehicle.lightsOn = step < 3; this.vehicle.hazardsOn = step === 2; }
+    this.audio.play(); this.renderService();
+    if (this.service.completed) {
+      this.progress.complete(`servico-${this.job}`, 100, 100);
+      this.feedback('✓ Serviço concluído! Escolha outra prática ou repita.', true);
+    } else this.feedback(this.service.definition.steps[step], true);
+  }
+  renderService() {
+    const s = this.service;
+    this.ui.$('assembly-step').textContent = s.completed ? 'CONCLUÍDO' : `AÇÃO ${s.step + 1} / ${s.definition.steps.length}`;
+    this.ui.$('assembly-title').textContent = s.completed ? '✓ Tudo pronto' : s.definition.title;
+    this.ui.$('assembly-instruction').textContent = s.completed ? 'Escolha outro serviço acima.' : s.definition.steps[s.step];
+    this.ui.$('assembly-meter-fill').style.width = `${s.step / s.definition.steps.length * 100}%`;
+    this.ui.$('assembly-count').textContent = `${s.step}/${s.definition.steps.length} ações`;
+    this.ui.$('assembly-inventory').innerHTML = '';
+    this.ui.show('assembly-configure', false);
+    const targets = this.ui.$('assembly-targets'); targets.innerHTML = '';
+    const names = { cover: s.step ? 'Fechar tampa' : 'Abrir tampa', filter: s.step === 1 ? 'Retirar filtro' : 'Encaixar filtro novo', positive: 'Conectar ponta +', negative: 'Conectar ponta −', meter: '12,6 V · Desconectar', headlights: 'Acender faróis', hazards: 'Ligar pisca-alerta', off: 'Desligar luzes' };
+    const button = document.createElement('button'); button.textContent = s.completed ? 'Repetir serviço' : names[s.target]; button.className = 'primary';
+    button.onclick = () => s.completed ? this.chooseJob(this.job) : this.serviceAct(s.target); targets.append(button);
+    for (const [id, marker] of Object.entries(this.serviceMarkers)) marker.visible = id === s.target;
+  }
   makeLabel(text) {
     const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = text.length < 3 ? 512 : 64;
     const ctx = canvas.getContext('2d'); ctx.fillStyle = '#15232be8'; ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -71,14 +138,15 @@ export class AssemblySession {
   createUI() {
     const el = document.createElement('section'); el.id = 'assembly'; el.className = 'assembly hidden';
     el.setAttribute('aria-label', 'Prática de montagem 3D');
-    el.innerHTML = `<header class="assembly-header"><div><span class="eyebrow">PRÁTICA INTERATIVA / 01</span><h2>Montagem de roda</h2><small>Veículo didático · modelo aproximado · suporte fixo</small></div><button id="assembly-exit">Sair da prática ×</button></header>
-      <aside class="assembly-guide"><div class="section-number" id="assembly-step"></div><h3 id="assembly-title"></h3><p id="assembly-instruction"></p><div class="assembly-meter"><i id="assembly-meter-fill"></i></div><small id="assembly-count"></small><div id="assembly-feedback" role="status" aria-live="polite"></div><div id="assembly-targets" class="assembly-targets" aria-label="Alternativa por teclado para os alvos 3D"></div><details><summary>O que estou aprendendo?</summary><p id="assembly-learning"></p></details><p class="practice-note">Modelo educativo simplificado. Sem elevação, torque físico ou liberação para operar um veículo real.</p></aside>
+    el.innerHTML = `<header class="assembly-header"><div><span class="eyebrow">MÃO NA MASSA</span><h2>Oficina prática</h2><small>Arraste para explorar o carro</small></div><button id="assembly-exit">Sair da prática ×</button></header>
+      <nav class="service-tabs" aria-label="Serviços do carro"><button data-job="wheel" aria-pressed="true">Roda</button><button data-job="filter" aria-pressed="false">Filtro de ar</button><button data-job="battery" aria-pressed="false">Bateria</button><button data-job="lights" aria-pressed="false">Luzes</button></nav><aside class="assembly-guide"><div class="section-number" id="assembly-step"></div><h3 id="assembly-title"></h3><p id="assembly-instruction"></p><div class="assembly-meter"><i id="assembly-meter-fill"></i></div><small id="assembly-count"></small><div id="assembly-feedback" role="status" aria-live="polite"></div><div id="assembly-targets" class="assembly-targets" aria-label="Alternativa por teclado para os alvos 3D"></div><details><summary>O que estou aprendendo?</summary><p id="assembly-learning"></p></details><p class="practice-note">Simulação educativa · valores de demonstração.</p></aside>
       <div class="assembly-view-actions"><button id="assembly-focus">Focar encaixe</button><button id="assembly-car-view">Ver carro</button><button id="assembly-hood" aria-pressed="false">Abrir capô</button><button id="assembly-hint">Destacar próximo</button></div>
-      <div class="assembly-parts" aria-label="Peças e ferramentas"><span>PEÇAS & FERRAMENTAS</span><div id="assembly-inventory"></div><button id="assembly-configure" class="primary hidden">Ativar perfil didático</button></div>
+      <div class="assembly-parts" aria-label="Peças e ferramentas"><span>PEÇAS & FERRAMENTAS</span><div id="assembly-inventory"></div><button id="assembly-configure" class="primary hidden">Preparar torquímetro</button></div>
       <div class="assembly-help">Arraste para girar · Role / pinça para aproximar · Clique nas peças e encaixes · ESC para sair</div>
       <div id="assembly-result" class="assembly-result hidden"></div>`;
     this.ui.$('app')?.append(el); // AppUI é montado em #app.
     if (!el.parentElement) document.querySelector('#app').append(el);
+    el.querySelectorAll('[data-job]').forEach(b => b.onclick = () => this.chooseJob(b.dataset.job));
     this.ui.bind('assembly-exit', () => this.requestExit());
     this.ui.bind('assembly-focus', () => this.focus()); this.ui.bind('assembly-car-view', () => this.focus(true));
     this.ui.bind('assembly-hood', () => {
@@ -96,12 +164,16 @@ export class AssemblySession {
     this.orbit.enableDamping = true; this.orbit.enablePan = false; this.orbit.minDistance = 0.55; this.orbit.maxDistance = 8;
     this.orbit.minPolarAngle = 0.25; this.orbit.maxPolarAngle = Math.PI / 2 - 0.02;
     this.orbit.minAzimuthAngle = -Math.PI / 2 + 0.12; this.orbit.maxAzimuthAngle = Math.PI / 2 - 0.12;
-    this.focus(); this.syncMeshes(); this.render(); this.ui.show('assembly'); this.ui.show('assembly-result', false);
+    this.chooseJob('wheel'); this.ui.show('assembly'); this.ui.show('assembly-result', false);
     this.ui.$('assembly-exit').focus(); this.feedback('Comece clicando no centro do cubo destacado. Você pode girar e aproximar a câmera.', true);
   }
   focus(full = false) {
     if (!this.active) return;
     const hub = this.vehicle.hubWorld;
+    if (this.service && this.job !== 'lights') {
+      this.orbit.target.copy(this.vehicle.group.position).add(new THREE.Vector3(-1.4, 1.05, 0));
+      this.engine.camera.position.copy(this.orbit.target).add(new THREE.Vector3(-2, 2.6, 2.8)); this.orbit.update(); return;
+    }
     const target = full ? this.vehicle.group.position.clone().add(new THREE.Vector3(0, 0.8, 0)) : hub.clone();
     this.orbit.target.copy(target);
     this.engine.camera.position.copy(target).add(new THREE.Vector3(full ? -3.5 : -0.22, full ? 2.1 : 0.8, full ? 4.6 : 2.6));
@@ -112,10 +184,16 @@ export class AssemblySession {
     const result = this.activity.select(id); this.feedback(result.message, result.ok); this.render(); this.audio.play();
   }
   pick(e) {
-    if (this.busy || this.activity.completed) return;
+    if (this.busy || (!this.service && this.activity.completed)) return;
     const rect = this.engine.renderer.domElement.getBoundingClientRect();
     this.pointer.set((e.clientX - rect.left) / rect.width * 2 - 1, -(e.clientY - rect.top) / rect.height * 2 + 1);
     this.raycaster.setFromCamera(this.pointer, this.engine.camera); this.stage.updateMatrixWorld(true);
+    if (this.service) {
+      this.serviceTargets.updateMatrixWorld(true);
+      const hit = this.raycaster.intersectObjects(Object.values(this.serviceMarkers).filter(m => m.visible))[0];
+      if (hit) this.serviceAct(hit.object.userData.service);
+      return;
+    }
     const candidates = [...this.targets.filter(t => t.visible), ...this.partPickers.filter(t => t.visible)];
     const hits = this.raycaster.intersectObjects(candidates, true);
     if (!hits.length) { this.feedback('Clique no alvo destacado ou selecione uma peça no inventário.', false); return; }
@@ -142,13 +220,15 @@ export class AssemblySession {
     if (result.completed) {
       const score = Math.max(0, 100 - this.activity.mistakes * 5);
       this.progress.complete(this.definition.id, score, 100); this.audio.play(true);
-      this.ui.$('assembly-result').innerHTML = `<span class="eyebrow">PRÁTICA CONCLUÍDA</span><h2>Você montou e conferiu.</h2><p>12 ações realizadas · ${this.activity.mistakes} tentativas a revisar · aproveitamento ${score}%.</p><p>Você identificou o apoio, posicionou a roda, iniciou as fixações, preparou a ferramenta, aplicou a sequência cruzada e conferiu o conjunto.</p><div class="button-stack"><button id="assembly-repeat" class="primary">Desmontar e repetir</button><button id="assembly-finish">Voltar à oficina</button></div>`;
+      this.ui.$('assembly-result').innerHTML = `<span class="eyebrow">PRÁTICA CONCLUÍDA</span><h2>Você montou e conferiu.</h2><p>12 ações realizadas · ${this.activity.mistakes} tentativas a revisar · aproveitamento ${score}%.</p><p>Continue com o filtro, a bateria ou as luzes.</p><div class="button-stack"><button id="assembly-repeat" class="primary">Desmontar e repetir</button><button id="assembly-more">Escolher outro serviço</button><button id="assembly-finish">Voltar à oficina</button></div>`;
       this.ui.show('assembly-result');
       this.ui.bind('assembly-repeat', () => { this.activity.reset(); this.busy = false; this.animation = null; this.syncMeshes(); this.render(); this.ui.show('assembly-result', false); this.focus(); });
+      this.ui.bind('assembly-more', () => this.chooseJob('filter'));
       this.ui.bind('assembly-finish', () => this.close()); this.ui.$('assembly-repeat').focus();
     } else if (result.ok) this.audio.play();
   }
   syncMeshes() {
+    if (this.service) { this.vehicle.activeWheel.visible = true; this.vehicle.bolts.forEach(b => b.visible = true); return; }
     const a = this.activity;
     this.vehicle.activeWheel.visible = a.mounted;
     if (!this.animation || this.animation.kind !== 'mount') this.vehicle.activeWheel.position.copy(this.vehicle.homeWheelPosition);
@@ -166,6 +246,7 @@ export class AssemblySession {
     }
   }
   render() {
+    if (this.service) { this.renderService(); return; }
     const a = this.activity;
     this.ui.$('assembly-step').textContent = `ETAPA ${a.step + 1} / ${this.definition.steps.length}`;
     this.ui.$('assembly-title').textContent = a.completed ? 'Conjunto conferido' : a.current.title;
@@ -190,6 +271,7 @@ export class AssemblySession {
   feedback(text, ok) { const el = this.ui.$('assembly-feedback'); el.textContent = text; el.className = ok ? 'feedback success' : 'feedback'; }
   hint() {
     if (!this.active) return;
+    if (this.service) { this.focus(true); this.feedback(this.service.completed ? 'Serviço concluído.' : this.service.definition.steps[this.service.step], true); return; }
     const step = this.activity.step;
     if ([0, 1, 5].includes(step)) { this.focus(); this.feedback(step === 1 ? 'Selecione o conjunto pneu + aro e clique no círculo no cubo.' : 'Clique no círculo no centro do conjunto.', true); }
     else if ([2, 4].includes(step)) {
@@ -198,7 +280,7 @@ export class AssemblySession {
         this.boltTargets.forEach((t, j) => t.userData.ring.material.color.set(j === i ? '#91e0ad' : '#e2b864'));
         this.focus(); this.feedback(`Próximo alojamento: ${i + 1}. Selecione ${step === 2 ? 'os fixadores' : 'o torquímetro'} no inventário.`, true);
       }
-    } else this.feedback('Selecione o torquímetro e clique em “Ativar perfil didático”.', true);
+    } else this.feedback('Selecione o torquímetro e clique em “Preparar torquímetro”.', true);
   }
   update(dt) {
     if (!this.active) return;
@@ -214,7 +296,7 @@ export class AssemblySession {
   }
   requestExit() {
     if (!this.active) return;
-    if (this.activity.progress && !this.activity.completed) {
+    if (!this.service && this.activity.progress && !this.activity.completed) {
       this.ui.modal('Sair da montagem?', '<p>O resultado só é salvo ao concluir a conferência. Você pode voltar para terminar a montagem atual.</p><div class="button-stack"><button id="assembly-continue" class="primary">Continuar montando</button><button id="assembly-leave">Sair sem concluir</button></div>');
       this.ui.bind('assembly-continue', () => this.ui.closeModal());
       this.ui.bind('assembly-leave', () => { this.ui.closeModal(); this.close(); });
@@ -223,7 +305,9 @@ export class AssemblySession {
   close() {
     if (!this.active) return;
     this.active = false; this.busy = false; this.animation = null; this.tool.visible = false;
-    this.orbit.dispose(); this.stage.visible = false; this.ui.show('assembly', false);
+    this.orbit.dispose(); this.stage.visible = false; this.serviceTargets.visible = false;
+    this.vehicle.setHood(false); this.vehicle.filterCoverLift = 0; this.vehicle.filterLift = 0; this.vehicle.filter.visible = true;
+    this.vehicle.lightsOn = false; this.vehicle.hazardsOn = false; this.ui.show('assembly', false);
     this.vehicle.activeWheel.visible = true; this.vehicle.activeWheel.position.copy(this.vehicle.homeWheelPosition);
     this.vehicle.bolts.forEach(b => { b.visible = true; b.material.color.set('#b8bcb9'); });
     this.engine.camera.position.copy(this.savedPosition); this.engine.camera.quaternion.copy(this.savedQuaternion);
