@@ -3,10 +3,14 @@ import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 // Local vehicle axes: front -X, rear +X, wheel track along Z.
 // These parts are visual only; merge by material to keep rendering inexpensive.
-export function createUndercarriage({ metal, black, rubber }) {
+export function createUndercarriage({ metal, black, rubber, serviceable = false }) {
   const group = new THREE.Group(); group.name = 'parte-inferior';
   const batches = new Map();
   const components = [];
+  const ids = name => /escapamento|catalisador|silencioso/.test(name) ? 'exhaust'
+    : /suspensão|amortecedor|mola/.test(name) ? 'suspension'
+    : /cárter/.test(name) ? 'oilPan' : /transmissão|semieixo|homocinética/.test(name) ? 'transmission'
+    : /tanque/.test(name) ? 'fuelTank' : /freio/.test(name) ? 'brakes' : 'chassis';
   function part(name, geometry, material, position, rotation = [0, 0, 0]) {
     const transform = new THREE.Matrix4().compose(
       new THREE.Vector3(...position),
@@ -15,6 +19,7 @@ export function createUndercarriage({ metal, black, rubber }) {
     geometry.applyMatrix4(transform);
     const flat = geometry.index ? geometry.toNonIndexed() : geometry;
     if (flat !== geometry) geometry.dispose();
+    flat.userData.inspectionPart = ids(name);
     if (!batches.has(material)) batches.set(material, []);
     batches.get(material).push(flat);
     components.push(name);
@@ -54,7 +59,7 @@ export function createUndercarriage({ metal, black, rubber }) {
   for (const x of [-1.24, 1.21]) box('travessa do subchassi', [0.16, 0.09, 1.22], [x, 0.29, 0]);
   box('cárter do motor', [0.51, 0.16, 0.48], [-1.4, 0.285, 0], metal);
   for (let i = 0; i < 5; i++) box('aleta do cárter', [0.37, 0.018, 0.025], [-1.4, 0.196, -0.16 + i * 0.08], black);
-  rod('bujão do cárter', [-1.48, 0.187, 0.1], [-1.48, 0.2, 0.1], 0.026, metal);
+  if (!serviceable) rod('bujão do cárter', [-1.48, 0.187, 0.1], [-1.48, 0.2, 0.1], 0.026, metal);
   box('carcaça da transmissão', [0.38, 0.13, 0.4], [-0.98, 0.285, 0.05], metal);
   for (const side of [-1, 1]) {
     rod('semieixo dianteiro', [-1.24, 0.37, side * 0.17], [-1.24, 0.4, side * 0.76], 0.025, metal);
@@ -74,6 +79,11 @@ export function createUndercarriage({ metal, black, rubber }) {
     geometries.forEach(g => g.dispose());
     const mesh = new THREE.Mesh(geometry, material);
     mesh.name = 'conjunto inferior'; mesh.castShadow = mesh.receiveShadow = true;
+    let triangleOffset = 0;
+    mesh.userData.inspectionFaces = geometries.map(g => {
+      const start = triangleOffset; triangleOffset += g.attributes.position.count / 3;
+      return { start, end: triangleOffset, id: g.userData.inspectionPart };
+    });
     group.add(mesh);
   }
   group.userData.components = components;

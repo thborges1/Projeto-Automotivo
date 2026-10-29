@@ -1,3 +1,13 @@
+# Validação atual da refatoração
+
+Atualização da troca manual: **79/79 testes Node**, lint, Prettier e build aprovados. O smoke gráfico executou a sequência completa com mouse nas peças, incluindo retirada por arraste, rotação, snap, fixadores individuais, aperto cruzado e conclusão salva; testou também bloqueios e restauração. Zero erros de console no percurso. Veja [evidências e limites](roda-manual.md).
+
+Atualização da janela de manutenção: **70/70 testes Node**, preservando o baseline anterior. O smoke verifica abertura direta sobre fundo desfocado, nome e informação ao passar o mouse, clique/abertura do capô e conclusão da prática de filtro dentro da janela. Os seis veículos, câmera, retorno, congelamento do elevador, cena exclusiva e carregamento/descarte de GLB continuam verificados. Lint, Prettier e build aprovados. Veja [relatório do modo](inspecao.md) para evidências e limites.
+
+Em 29/10/2026: 52/52 testes Node, ESLint, Prettier incremental e build aprovados. Smoke em Edge/WebGL 2 verificou entrada principal, montagem acessível, movimento, seleção, ciclo de elevador, travas, abertura de óleo/montagem, descarte e seis câmeras de comparação, sem erros de console. A geometria e as transformações do cenário têm hash idêntico ao backup anterior à refatoração. FPS e hardware real não foram medidos. Veja [evidências, backup e limitações](refatoracao.md).
+
+O conteúdo abaixo é o registro histórico das etapas anteriores.
+
 # Registro de validação — protótipo 01
 
 ## Revisão 03 — reconstrução por fotografias

@@ -4,7 +4,7 @@ export function createLighting(scene, kit, m, config) {
   const { box, repeat, pipe } = kit;
   const hemi = new THREE.HemisphereLight('#e6ecec', '#8f8a7e', 1.65); scene.add(hemi);
   const sun = new THREE.DirectionalLight('#f1eee4', 2.5);
-  sun.position.set(18, 11, -7); sun.target.position.set(0, 0, -3); sun.castShadow = true;
+  sun.position.set(18, 11, -7); sun.target.position.set(0, 0, -3); sun.castShadow = false;
   Object.assign(sun.shadow.camera, { left: -19, right: 19, top: 21, bottom: -21, near: 0.5, far: 55 });
   sun.shadow.bias = -0.00015; sun.shadow.normalBias = 0.018; sun.shadow.mapSize.set(2048, 2048); scene.add(sun, sun.target);
   for (const x of [-7.2, 0.1, 5.3]) for (const z of [-11.5, -5.6, 0.3, 6.2, 12.1]) {

@@ -1,50 +1,79 @@
-# Arquitetura — protótipo 01
+﻿# Arquitetura do simulador
 
-**Revisão 03:** `GeometryKit` compartilha primitivas e lotes; `Architecture` constrói o envelope com cobertura inclinada e aberturas; `Laboratory` reconstrói as fachadas do volume interno; `WorkshopProps` representa os conjuntos confirmados nas fotos; `StaticBatching` instancia ou combina geometrias estáticas por material, preservando o carro interativo. `Materials` gera texturas locais distintas para cor e rugosidade. O motor gera uma sonda estática do próprio ambiente em qualidade média/alta, com descarte do render target e intensidade discreta.
+ES Modules com composição e regras educativas separadas do 3D. A refatoração conserva as interfaces públicas usadas pelas sessões e pela página de comparação.
 
-As posições principais e seis poses de revisão estão em `public/data/workshop.json.reconstruction`. A segunda entrada Vite, `comparacao.html`, usa o mesmo motor/cenário e adiciona câmera orbital, comparação de referências e exportação manual. Não altera os controles do aluno. Veja `reconstrucao-03.md` para mapa, evidências e limitações.
+## Dependências
 
-Atualização 02: `AssemblyActivity` modela pré-requisitos de montagem; `AssemblySession` coordena raycast, inventário, alvos, animação e câmera orbital durante a prática. `Vehicle` contém peças separadas e capô articulado; `VehicleStation` adapta o veículo ao registro universal. Os dados estão em `public/data/assembly.json`. O estado `assembly` libera o cursor, interrompe a navegação e restaura a câmera ao sair. O parser GLTF agora é importado sob demanda, apenas quando há GLB cadastrado. O guia completo está em `pratica-montagem.md`.
-
-Aplicação ES Modules com Three.js e Vite. Todas as funções essenciais e materiais são locais, sem backend, CDN, fontes remotas ou dependências pagas.
+```mermaid
+flowchart TD
+  main[main.js] --> Game
+  Game --> Engine
+  Game --> UI[AppUI / EquipmentPanel / TouchControls]
+  Game --> Sessions[AssemblySession / OilChangeSession]
+  Game --> InteractionSystem
+  Engine --> GameLoop
+  Engine --> Graphics[Renderer / StaticReflections]
+  Engine --> Workshop
+  Engine --> Player[Controls / CollisionSystem]
+  Engine --> EquipmentRegistry
+  Engine --> VehicleFleet
+  Workshop --> Objects[Vehicle / VehicleLift / equipamentos]
+  Objects --> LiftMotion
+  Sessions --> Rules[education: regras puras]
+  VehicleFleet --> VehicleData
+  Engine --> DisposeUtils
+  VehicleFleet --> DisposeUtils
+  EquipmentRegistry --> DisposeUtils
+```
 
 ## Responsabilidades
 
-- `src/core/Engine.js`: cena, renderizador, câmera, loop, qualidade e descarte.
-- `src/core/Controls.js`: primeira pessoa, teclado, pointer lock, suavização e pausa por perda de foco.
-- `src/core/CollisionSystem.js`: círculo horizontal contra caixas alinhadas aos eixos, com subdivisão de movimento e deslizamento por eixo.
-- `src/world/`: construção procedural da arquitetura, materiais e luzes. Uma geometria de caixa compartilhada na arquitetura e pilares instanciados.
-- `src/objects/`: registro por ID, volumes de colisão, bancada genérica e carregador GLTF com fallback. Modelos reais devem seguir escala em metros, origem no piso e nós com IDs dos componentes.
-- `src/systems/`: seleção por proximidade/direção com oclusão por volumes sólidos, áudio opcional e persistência versionada.
-- `src/education/QuizSystem.js`: avaliação independente da interface; primeira resposta registrada, feedback e repetição.
-- `src/ui/`: apresentação, painel de abas, questionário e controles de toque.
-- `src/main.js`: coordenação dos estados e percursos.
-- `public/data/`: dimensões, equipamento e conteúdo educativo, separados da geometria.
+| Módulo | Responsabilidade |
+| --- | --- |
+| Game | `createGame(root)` retorna start/dispose; possui estado, percursos, sessões e callbacks da interface. |
+| Engine | Fachada de cena, câmera, mundo e controles; mantém start/loadVehicles/applySettings/focus/dispose. |
+| GameLoop | Único setAnimationLoop; delta em segundos limitado a 0,05; atualização antes da renderização; start/stop idempotentes. |
+| Renderer | Cria/configura WebGLRenderer; DPR 1/1,5/2 limitado ao aparelho. |
+| StaticReflections | Captura única do cenário em média/alta; possui e descarta o render target. |
+| Workshop e construtores | Geometria, luzes, materiais, implantação, batching e instanciamento. |
+| Controls | Primeira pessoa, pointer lock, teclado/mouse, velocidade e pausa por perda de foco. |
+| CollisionSystem | Círculo horizontal contra AABB, subdivisão e deslizamento; não simula física veicular. |
+| LiftMotion | Estado temporal sem DOM/Three.js; quatro segundos com interpolação quintic. |
+| VehicleLift | Adapta estado a grupo 3D, colisões, destaque e travas; campos públicos anteriores delegam ao estado. |
+| VehicleData / VehicleFleet | Cadastro/validação e carregamento visual; Draco/KTX2, LOD e recursos próprios. |
+| EquipmentRegistry | IDs únicos, contrato de interação, GLB opcional e fallback. |
+| InteractionSystem | Seleção por distância, direção e oclusão; preserva ações específicas dos adaptadores. |
+| education | Progressão, ferramentas, pré-requisitos e conclusão independentes da renderização. |
+| systems/*Session | Regras, raycasts, animação, câmera orbital e apresentação de cada prática, atualizadas pelo motor. |
+| ProgressSystem / AudioSystem | Persistência local com fallback em memória e feedback sonoro opcional. |
+| DisposeUtils | Libera geometria, materiais, texturas, shadow maps e buffers de instâncias uma vez por conjunto. |
 
-## Estados
+## Inicialização e atualização
 
-`loading → home → playing → paused/panel/help → playing/home`. Configurações e escolha de percurso usam diálogos. Ao abrir um painel a movimentação para e o cursor é liberado. Fechar o painel abre pausa; retomar exige um clique para cumprir as regras do navegador para pointer lock.
+index.html importa main.js, que cria Game. start carrega quatro JSON em paralelo, constrói Engine, carrega frota somente se configurada, registra equipamentos/estações e cria sessões/eventos. Então inicia o loop e abre a tela inicial. Falhas técnicas vão ao console e à tela de recuperação; equipamento GLB opcional e reflexos têm fallback não crítico.
 
-Em desktop, entrada pede pointer lock. Em celular, joystick e área de olhar trabalham com Pointer Events independentes. Tela cheia é solicitada somente por ação do usuário e depende da compatibilidade do navegador.
+Ordem por frame: controles, veículo didático, elevadores, objetos registrados, sessões, seleção/HUD e renderização. Página oculta não atualiza/renderiza; o tempo é rebaseado sem acumular salto. Repetir start não instala callbacks concorrentes. Comparação usa a mesma fachada e OrbitControls.
 
-## Colisão e interação
+Estados: loading, home, playing, paused, panel, help, settings, activities, assembly e oil-change. Pausa interrompe movimento e libera pointer lock; retomar exige gesto do usuário. Regras educativas permanecem nos modelos, sem dependência do renderer.
 
-A solução é equivalente para este ambiente plano: altura dos olhos fixa, sem salto, escadas, rampas ou gravidade. Paredes, pilares, bancadas e armários têm caixas sólidas. AABB de móveis bloqueia todo o volume de projeção, inclusive sob o tampo. A interação usa cone de visão, distância de 3,2 m e teste de oclusão horizontal. Não é física de corpos rígidos e não deve ser usada para veículos em movimento. Para pisos desnivelados e máquinas complexas, evoluir para Capsule/Octree ou BVH.
+## Propriedade e encerramento
 
-## Cadastro de equipamento
+Game aborta listeners globais, remove handlers de toque e encerra sessões antes do motor. Sessões removem eventos e controladores orbitais; óleo descarta rigs e libera travas. Engine para o loop, invalida o registro, encerra frota/reflexos/controles, descarta recursos da cena e remove o canvas. O encerramento de Game/Engine/frota é idempotente.
 
-1. Adicionar entrada em `equipment.json` com ID único, posição em metros, tamanho de colisão, conteúdo e `activityId`.
-2. Adicionar a atividade em `activities.json` com perguntas, índices de resposta e explicações.
-3. Sem `model`, a fábrica atual cria a bancada de demonstração. Novos tipos de mobiliário precisam de uma fábrica visual ou de um GLB: cadastrar nome por si só não gera a máquina real.
-4. Com `model: "/modelos/arquivo.glb"`, o registro carrega o GLB e substitui a aparência provisória; conserva o volume configurado. Nós com nomes de `components[].id` permitem destaque.
-5. Validar escala, posição, colisão, nomes de nós e desempenho. Modelos comprimidos com Draco/Meshopt ainda exigem configurar os decodificadores; não estão anunciados como suportados nesta etapa.
+A cena possui os recursos GPU do registro. A frota remove seu grupo antes do descarte da cena; preserva a textura de sombra durante descarte individual e a libera no encerramento. DisposeUtils aceita Set compartilhado entre raízes e exclusões de texturas. Não fecha ImageBitmaps indiscriminadamente porque a propriedade pode ser compartilhada por loaders. GLBs de equipamento concluídos após encerramento são liberados sem serem anexados.
 
-## Persistência e privacidade
+Não há cache global adicional: compartilhamento entre instâncias exigiria regras de propriedade ainda não necessárias. Materiais dos construtores podem ser compartilhados na mesma aplicação. IDs da UI continuam globais; múltiplas aplicações simultâneas no mesmo DOM não são suportadas.
 
-Chave `senai-automotivo-3d:v1`: IDs visitados, última nota por atividade, data de conclusão e configurações. Sem nome, cadastro, analytics ou transmissão. Armazenamento bloqueado mantém o estado em memória. Reinício pede confirmação dentro da interface. Referências originais não aparecem no simulador; revisar pessoas, placas e permissões antes de publicação.
+## Configuração e limites
 
-## Renderização e limitações
+workshop.json define implantação e câmeras; equipment.json, activities.json e assembly.json definem conteúdo. Dimensões locais permanecem nos construtores: centralizar cada coordenada aumentaria acoplamento. VehicleData descreve modelos visuais; perfis de óleo são adaptações educativas independentes de dimensões do fabricante.
 
-PBR padrão, concreto procedural com variação de superfície, tone mapping ACES, luz hemisférica, luz direcional e preenchimento pontual. Apenas a direcional gera sombras. Qualidade baixa sem sombras e DPR 1; média 1024/DPR 1,5; alta 2048/DPR 2. DPR limitado ao do aparelho. Luminárias visuais emissivas não acrescentam luzes individuais.
+Sombras WebGL continuam desativadas em todas as qualidades, como antes desta etapa; sombras de contato e sonda estática permanecem. Geometria, materiais, posições e luzes não foram redesenhados. Não há medição de FPS no hardware real nem justificativa para otimizações especulativas.
 
-Não há reflexos dinâmicos, modelos reais, mapas PBR fotográficos, iluminação assada ou LOD de veículos nesta entrega. Texturas procedurais e primitivas detalhadas são uma fundação, não um acabamento fotorrealista. O desempenho de 60 FPS é uma meta que precisa ser medido no laboratório.
+Não foram introduzidos EventBus, hierarquia de atividades, TypeScript ou framework. AssemblySession/OilChangeSession continuam coordenadores de suas práticas; as regras já estão separadas em education. Consulte o README para extensão e o [relatório](refatoracao.md) para backup, evidências e limitações.
+
+## Modo de inspeção
+
+Na troca manual, `ManualWheelSession` compõe regras puras (`WheelMaintenanceActivity`) e arraste por raio/plano (`ConstrainedPartDrag`). A sessão controla captura, poses, animações e restauração, sem motor físico nem loop próprio; o seletor normal é suspenso durante o gesto. A roda e os fixadores são emprestados, não clonados. Veja [roda-manual.md](roda-manual.md).
+
+Game abre InspectionSession diretamente ao clicar no carro. Engine mantém a oficina pausada e usa seu loop/renderer em uma janela modal: o mesmo canvas é movido para o painel; uma captura estática da oficina forma o fundo desfocado. InspectionPartSelection identifica hover/clique; VehicleParts fornece informações e preserva a identificação em lotes/instâncias. InspectionWorkbench adapta as regras de AssemblyActivity/ServiceActivity às ações dentro da janela, restaurando alterações transitórias ao encerrar. O veículo é emprestado sem clonagem; GLBs detalhados opcionais continuam sob demanda. Configuração, responsabilidades e evidências em [inspecao.md](inspecao.md).

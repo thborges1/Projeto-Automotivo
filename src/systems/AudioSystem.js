@@ -11,7 +11,12 @@ export class AudioSystem {
       gain.gain.exponentialRampToValueAtTime(0.001, this.context.currentTime + 0.14);
       osc.connect(gain); gain.connect(this.context.destination);
       osc.start(); osc.stop(this.context.currentTime + 0.15);
-    } catch { /* Áudio opcional: indisponibilidade não interrompe a aprendizagem. */ }
+    } catch (error) { console.warn('Feedback sonoro indisponível.', error); }
   }
-  dispose() { this.context?.close(); }
+  dispose() {
+    this.enabled = false;
+    const context = this.context;
+    this.context = null;
+    if (context && context.state !== 'closed') context.close().catch(error => console.warn('Falha ao encerrar áudio.', error));
+  }
 }

@@ -26,6 +26,7 @@ export class AppUI {
       <div id="error" class="error-screen hidden" role="alert"></div>`;
     this.$ = id => document.getElementById(id);
     this.toastTimer = null;
+    this.abort = new AbortController();
     document.addEventListener('keydown', e => {
       const dialog = !this.$('modal-backdrop').classList.contains('hidden') ? this.$('modal') : !this.$('panel').classList.contains('hidden') ? this.$('panel') : null;
       if (!dialog || e.key !== 'Tab') return;
@@ -33,7 +34,7 @@ export class AppUI {
       const first = focusable[0], last = focusable.at(-1);
       if (e.shiftKey && (document.activeElement === first || !dialog.contains(document.activeElement))) { e.preventDefault(); last?.focus(); }
       else if (!e.shiftKey && (document.activeElement === last || !dialog.contains(document.activeElement))) { e.preventDefault(); first?.focus(); }
-    });
+    }, { signal: this.abort.signal });
   }
   show(id, value = true) { this.$(id).classList.toggle('hidden', !value); }
   updateInteraction(target, active) {
@@ -41,11 +42,12 @@ export class AppUI {
     if (!target || !active) return;
     const name = this.$('target-name');
     const action = this.$('target-action');
-    const label = target.data.type === 'lift' ? target.actionLabel : 'Conhecer equipamento · demonstração';
+    const label = target.actionLabel || 'Conhecer equipamento · demonstração';
     if (name.textContent !== target.data.name) name.textContent = target.data.name;
     if (action.textContent !== label) action.textContent = label;
   }
-  bind(id, fn) { this.$(id).addEventListener('click', fn); }
+  bind(id, fn) { this.$(id).addEventListener('click', fn, { signal: this.abort.signal }); }
+  dispose() { clearTimeout(this.toastTimer); this.abort.abort(); }
   toast(message) { clearTimeout(this.toastTimer); this.$('toast').textContent = message; this.show('toast'); this.toastTimer = setTimeout(() => this.show('toast', false), 6000); }
   modal(title, body) {
     this.$('modal').innerHTML = `<div class="modal-heading"><h2 id="modal-title">${title}</h2></div>${body}`;
@@ -61,10 +63,11 @@ export class AppUI {
   updateProgress(progress) {
     const result = progress.data.completed['preparar-bancada'];
     const practice = progress.data.completed['montagem-roda'];
-    const services = Number(Boolean(practice)) + ['filter', 'battery', 'lights'].filter(id => progress.data.completed[`servico-${id}`]).length;
+    const services = Number(Boolean(practice)) + ['filter', 'battery', 'lights'].filter(id => progress.data.completed[`servico-${id}`]).length
+      + ['corolla', 'hb20', 'gol'].filter(id => progress.data.completed[`troca-oleo-${id}`]).length;
     if (services) {
-      this.$('home-progress').textContent = `✓ ${services}/4 práticas concluídas no carro`;
-      this.$('progress-label').textContent = `OFICINA ${services}/4`;
+      this.$('home-progress').textContent = `✓ ${services}/7 práticas concluídas no carro`;
+      this.$('progress-label').textContent = `OFICINA ${services}/7`;
       return;
     }
     this.$('home-progress').textContent = practice ? `✓ Montagem de roda concluída · aproveitamento ${practice.score}%` : result ? `✓ Fundamentos da bancada · ${result.score}/${result.total} respostas corretas` : 'Roda, filtro, bateria e luzes: escolha o que fazer no carro.';

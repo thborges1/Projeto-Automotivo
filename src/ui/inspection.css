@@ -1,0 +1,238 @@
+.vehicle-inspection {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: #030811df;
+  backdrop-filter: blur(10px);
+  padding: 3vh 3vw;
+}
+.inspection-background {
+  position: absolute;
+  inset: -10px;
+  width: calc(100% + 20px);
+  height: calc(100% + 20px);
+  object-fit: cover;
+  filter: blur(9px) brightness(0.35);
+  pointer-events: none;
+}
+.inspection-window {
+  position: relative;
+  width: min(1220px, 100%);
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid #a4bfce40;
+  border-radius: 14px;
+  background: #1a2733;
+  box-shadow: 0 30px 100px #000a;
+}
+.inspection-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 18px 24px;
+  border-bottom: 1px solid #ffffff18;
+}
+.inspection-header small,
+.inspection-part > small {
+  color: #a9bfcb;
+  font-size: 10px;
+  letter-spacing: 1.6px;
+}
+.inspection-header h1 {
+  font-size: clamp(19px, 2.5vw, 27px);
+  margin: 7px 0 0;
+}
+.inspection-header-actions {
+  display: flex;
+  gap: 8px;
+}
+.inspection-header button {
+  font-size: 12px;
+}
+.inspection-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 270px;
+  min-height: 0;
+}
+.inspection-stage {
+  position: relative;
+  min-width: 0;
+  height: min(65vh, 620px);
+  background: #27333e;
+}
+.inspection-canvas {
+  width: 100%;
+  height: 100%;
+}
+.inspection-canvas canvas {
+  width: 100%;
+  height: 100%;
+}
+.inspection-stage-hint {
+  position: absolute;
+  bottom: 10px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  font-size: 11px;
+  text-align: center;
+  color: #c3d0d9;
+  pointer-events: none;
+}
+.inspection-part {
+  padding: 22px;
+  background: #15212c;
+  border-left: 1px solid #ffffff16;
+  overflow-y: auto;
+  max-height: min(65vh, 620px);
+}
+.inspection-part h2 {
+  font-size: 21px;
+  margin: 14px 0;
+}
+.inspection-part p {
+  color: #b8c8d2;
+  font-size: 12px;
+  line-height: 1.7;
+}
+.inspection-part-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 22px;
+}
+.inspection-part-actions button {
+  text-align: left;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.inspection-part [data-feedback]:not(:empty) {
+  color: #e4cd92;
+  border-top: 1px solid #ffffff20;
+  padding-top: 14px;
+}
+.inspection-tooltip {
+  position: absolute;
+  width: min(250px, calc(100% - 16px));
+  padding: 13px 15px;
+  border: 1px solid #e8c36b88;
+  border-radius: 7px;
+  background: #0d1926f5;
+  box-shadow: 0 6px 25px #0005;
+  pointer-events: none;
+  z-index: 2;
+}
+.inspection-tooltip strong {
+  display: block;
+  color: #f1d68c;
+  font-size: 13px;
+}
+.inspection-tooltip span {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #ccdae2;
+  margin-top: 6px;
+}
+.inspection-tooltip small {
+  display: block;
+  margin-top: 9px;
+  font-size: 10px;
+  color: #8cb8cc;
+}
+.inspection-footer {
+  display: block;
+  padding: 10px 22px;
+  border-top: 1px solid #ffffff16;
+  font-size: 11px;
+  color: #aec3ce;
+}
+.inspection-footer p {
+  margin: 0;
+}
+.manual-wheel-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 18px 0;
+}
+.manual-wheel-tools > strong,
+.manual-wheel-tools > p,
+.manual-wheel-tools > small {
+  grid-column: 1 / -1;
+}
+.manual-wheel-tools > strong {
+  color: #dce8ed;
+  font-size: 12px;
+}
+.manual-wheel-tools button {
+  padding: 9px 7px;
+  font-size: 11px;
+}
+.manual-wheel-tools button[aria-pressed='true'] {
+  border-color: #e8c66d;
+  background: #e8c66d22;
+  color: #f2d893;
+}
+.manual-wheel-tools small {
+  color: #aebfc9;
+  font-size: 10px;
+  line-height: 1.6;
+}
+.manual-wheel-tools .manual-wheel-feedback {
+  color: #efd196;
+}
+.manual-wheel-tools .manual-wheel-instruction {
+  border-left: 2px solid #8bceda;
+  padding-left: 10px;
+  margin-top: 0;
+  color: #e4edf2;
+}
+.manual-wheel-tools[data-completed='true'] .manual-wheel-instruction {
+  border-color: #8ce5ae;
+  color: #b4ecc9;
+}
+@media (max-width: 760px) {
+  .vehicle-inspection {
+    padding: 10px;
+  }
+  .inspection-window {
+    max-height: calc(100dvh - 20px);
+    overflow-y: auto;
+  }
+  .inspection-header {
+    padding: 12px;
+    gap: 10px;
+  }
+  .inspection-header-actions {
+    flex-direction: column;
+  }
+  .inspection-header button {
+    padding: 8px 10px;
+    font-size: 11px;
+  }
+  .inspection-content {
+    grid-template-columns: 1fr;
+  }
+  .inspection-stage {
+    height: 46dvh;
+    min-height: 240px;
+  }
+  .inspection-part {
+    padding: 15px;
+    max-height: none;
+    border-left: 0;
+    border-top: 1px solid #ffffff16;
+  }
+  .inspection-part h2 {
+    font-size: 18px;
+    margin: 8px 0;
+  }
+  .inspection-part-actions {
+    margin-top: 12px;
+  }
+}

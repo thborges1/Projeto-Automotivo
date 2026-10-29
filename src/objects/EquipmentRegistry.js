@@ -1,4 +1,5 @@
 import { Equipment } from './Equipment.js';
+import { disposeObject3D } from '../utils/DisposeUtils.js';
 
 export class EquipmentRegistry {
   constructor(scene, materials, collision) {
@@ -6,6 +7,7 @@ export class EquipmentRegistry {
     this.items = new Map(); this.loader = null; this.disposed = false;
   }
   async register(data, onError = () => {}) {
+    this.assertActive();
     if (this.items.has(data.id)) throw new Error(`Identificador duplicado: ${data.id}`);
     const item = new Equipment(data, this.materials, this.collision);
     this.items.set(data.id, item);
@@ -27,15 +29,25 @@ export class EquipmentRegistry {
           if (node) item.parts.set(component.id, node);
         }
         item.outline.update();
-      } catch (error) { onError(`Modelo de ${data.name} indisponível. Demonstração genérica mantida.`, error); }
+      } catch (error) {
+        console.warn(`Falha ao carregar equipamento ${data.id}: ${data.model}`, error);
+        onError(`Modelo de ${data.name} indisponível. Demonstração genérica mantida.`, error);
+      }
     }
     return item;
   }
   attach(item) {
+    this.assertActive();
+    if (!item?.data?.id || !item.anchor?.isVector3 || typeof item.setHighlight !== 'function' || typeof item.update !== 'function') {
+      throw new Error('Objeto interativo inválido: requer data.id, anchor, setHighlight e update.');
+    }
     if (this.items.has(item.data.id)) throw new Error(`Identificador duplicado: ${item.data.id}`);
     this.items.set(item.data.id, item);
     this.scene.add(item.outline);
     if (item.componentOutline) this.scene.add(item.componentOutline);
   }
-  disposeModel(root) { root.traverse(o => { o.geometry?.dispose(); for (const m of Array.isArray(o.material) ? o.material : o.material ? [o.material] : []) { for (const v of Object.values(m)) if (v?.isTexture) v.dispose(); m.dispose(); } }); }
+  assertActive() { if (this.disposed) throw new Error('Registro de equipamentos já encerrado.'); }
+  disposeModel(root) { disposeObject3D(root); }
+  // The scene owns GPU resources; the registry owns lookup references and pending loads.
+  dispose() { this.disposed = true; this.items.clear(); this.loader = null; }
 }

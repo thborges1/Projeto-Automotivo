@@ -3,3 +3,7 @@ dist/
 .browser-qa/
 .browser-check/
 .browser-fidelity/
+public/decoders/
+.browser-oil/
+.npm-cache/
+.browser-refactor/

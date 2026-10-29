@@ -48,6 +48,9 @@ async function boot() {
     };
     selectView(); engine.start(() => orbit.update());
     window.addEventListener('pagehide', () => { orbit.dispose(); engine.dispose(); });
-  } catch (error) { console.error(error); $('status').textContent = `Falha ao preparar a comparação: ${error.message}`; }
+  } catch (error) {
+    orbit?.dispose(); engine?.dispose();
+    console.error(error); $('status').textContent = `Falha ao preparar a comparação: ${error.message}`;
+  }
 }
 boot();

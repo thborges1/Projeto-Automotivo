@@ -11,6 +11,7 @@ export class Controls {
     this.pitch = 0;
     this.velocity = new Vector3();
     this.direction = new Vector3();
+    this.upAxis = new Vector3(0, 1, 0);
     this.sensitivity = 1;
     this.camera.rotation.order = 'YXZ';
     this.abort = new AbortController();
@@ -68,7 +69,7 @@ export class Controls {
     const z = Number(k.has('KeyS') || k.has('ArrowDown')) - Number(k.has('KeyW') || k.has('ArrowUp')) + this.stick.y;
     this.direction.set(x, 0, z);
     if (this.direction.lengthSq() > 1) this.direction.normalize();
-    this.direction.applyAxisAngle(new Vector3(0, 1, 0), this.yaw);
+    this.direction.applyAxisAngle(this.upAxis, this.yaw);
     const speed = k.has('ShiftLeft') || k.has('ShiftRight') ? this.config.runSpeed : this.config.walkSpeed;
     this.direction.multiplyScalar(speed);
     this.velocity.lerp(this.direction, 1 - Math.exp(-14 * dt));

@@ -1,4 +1,5 @@
 export default {
+  server: { watch: { ignored: ['**/.browser-*/**', '**/.npm-cache/**'] } },
   build: {
     rollupOptions: {
       input: { main: 'index.html', comparacao: 'comparacao.html' },

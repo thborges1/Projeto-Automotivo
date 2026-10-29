@@ -6,15 +6,20 @@ import { buildLaboratory } from './Laboratory.js';
 import { buildWorkshopProps } from './WorkshopProps.js';
 import { batchStaticWorld } from './StaticBatching.js';
 import { Vehicle } from '../objects/Vehicle.js';
+import { createBakedShadow, createShadowTexture } from '../vehicles/BakedShadow.js';
 
 export function createWorkshop(scene, collision, config) {
   const root = new THREE.Group(); root.name = 'oficina — reconstrução por fotografias'; scene.add(root);
   const materials = createMaterials(config);
   const kit = buildArchitecture(root, materials, collision, config);
   buildLaboratory(root, materials, collision, config);
-  const lifts = buildWorkshopProps(root, kit, materials, collision, config);
+  const coveredVehicles = [];
+  const lifts = buildWorkshopProps(root, kit, materials, collision, config, coveredVehicles);
   const lights = createLighting(scene, kit, materials, config);
   const vehicle = new Vehicle(config.reconstruction.vehicle); root.add(vehicle.group);
+  const contactShadow = createBakedShadow(createShadowTexture(), 2.5, 4.8);
+  contactShadow.rotation.z = Math.PI / 2;
+  vehicle.group.add(contactShadow);
   const [vx, , vz] = config.reconstruction.vehicle;
   collision.addBox(vx, vz, 4.4, 2.1, 'veiculo-pratica');
   // Exterior visto nas janelas: tijolo baixo e vegetação volumétrica simplificada.
@@ -43,5 +48,5 @@ export function createWorkshop(scene, collision, config) {
   root.traverse(o => { if (o.material === materials.window || o.material === materials.skylight || o.material === materials.interiorGlass) o.castShadow = false; });
   kit.flush();
   const savedDrawCalls = batchStaticWorld(root);
-  return { root, exterior, materials, lights, vehicle, lifts, savedDrawCalls };
+  return { root, exterior, materials, lights, vehicle, lifts, coveredVehicles, savedDrawCalls };
 }

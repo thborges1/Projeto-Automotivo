@@ -1,10 +1,10 @@
 {
   "kind": "Auditoria estrutural em CPU, sem renderização gráfica",
-  "meshes": 279,
-  "batches": 55,
-  "instances": 2339,
-  "triangles": 131624,
-  "staticDrawCallsAvoided": 656,
+  "meshes": 274,
+  "batches": 39,
+  "instances": 1851,
+  "triangles": 92534,
+  "staticDrawCallsAvoided": 565,
   "collisionBoxes": 55,
   "comparisonViews": 6,
   "estimatedDimensions": {

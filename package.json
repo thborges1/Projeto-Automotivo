@@ -3,11 +3,18 @@
   "version": "1.0.0",
   "description": "Protótipo educacional de oficina automotiva 3D",
   "scripts": {
+    "assets:decoders": "node scripts/copy-vehicle-decoders.mjs",
+    "predev": "npm run assets:decoders",
+    "prebuild": "npm run assets:decoders",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
     "test": "node --test --test-isolation=none tests/*.test.js",
-    "audit": "node scripts/auditar-cenario.mjs"
+    "audit": "node scripts/auditar-cenario.mjs",
+    "lint": "eslint src tests scripts *.config.js",
+    "format": "prettier --write src/core/Game.js src/core/GameLoop.js src/graphics src/machines src/utils src/vehicles/VehicleData.js tests/architecture.test.js eslint.config.js scripts/smoke-browser.mjs src/vehicles/Inspec*.js src/systems/InspectionSession.js src/systems/VehicleSelection.js src/ui/InspectionPanel.js src/ui/inspection.css tests/inspection.test.js src/systems/InspectionPartSelection.js src/systems/InspectionWorkbench.js src/vehicles/VehicleParts.js tests/inspection-parts.test.js src/education/WheelMaintenanceActivity.js src/interactions/ConstrainedPartDrag.js src/systems/ManualWheelSession.js tests/manual-wheel.test.js",
+    "format:check": "prettier --check src/core/Game.js src/core/GameLoop.js src/graphics src/machines src/utils src/vehicles/VehicleData.js tests/architecture.test.js eslint.config.js scripts/smoke-browser.mjs src/vehicles/Inspec*.js src/systems/InspectionSession.js src/systems/VehicleSelection.js src/ui/InspectionPanel.js src/ui/inspection.css tests/inspection.test.js src/systems/InspectionPartSelection.js src/systems/InspectionWorkbench.js src/vehicles/VehicleParts.js tests/inspection-parts.test.js src/education/WheelMaintenanceActivity.js src/interactions/ConstrainedPartDrag.js src/systems/ManualWheelSession.js tests/manual-wheel.test.js",
+    "test:browser": "node scripts/smoke-browser.mjs"
   },
   "keywords": [],
   "author": "",
@@ -17,6 +24,8 @@
     "three": "^0.186.1"
   },
   "devDependencies": {
+    "eslint": "^10.13.0",
+    "prettier": "^3.9.10",
     "vite": "^8.3.5"
   }
 }

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-BR">
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/ui/assembly.css" />
+  <body>
+    <main id="app"></main>
+    <script type="module">
+      import { Engine } from '/src/core/Engine.js';
+      import { AppUI } from '/src/ui/AppUI.js';
+      import { ProgressSystem } from '/src/systems/ProgressSystem.js';
+      import { InteractionSystem } from '/src/systems/InteractionSystem.js';
+      import { AssemblySession } from '/src/systems/AssemblySession.js';
+      import { OilChangeSession } from '/src/systems/OilChangeSession.js';
+      import { MaintenanceStation } from '/src/objects/MaintenanceStation.js';
+      import { collectInspectableVehicles } from '/src/vehicles/InspectableVehicles.js';
+      import { InspectionSession } from '/src/systems/InspectionSession.js';
+      import { InspectionPanel } from '/src/ui/InspectionPanel.js';
+      import { VehicleSelection } from '/src/systems/VehicleSelection.js';
+      import * as THREE from 'three';
+      import '/src/ui/oil-change.css';
+      import '/src/ui/inspection.css';
+
+      const config = await (await fetch('/data/workshop.json')).json();
+      const definition = await (await fetch('/data/assembly.json')).json();
+      const equipment = await (await fetch('/data/equipment.json')).json();
+      const ui = new AppUI(document.querySelector('#app'));
+      const engine = new Engine(ui.$('viewport'), config, { quality: 'medium', sensitivity: 1 }, () => {});
+      for (const data of equipment) await engine.registry.register(data);
+      for (const lift of engine.world.lifts) engine.registry.attach(lift);
+      const station = new MaintenanceStation(engine.world.lifts[0]);
+      engine.registry.attach(station);
+      const progress = new ProgressSystem(null), audio = { play() {} };
+      const oil = new OilChangeSession(engine, ui, progress, audio, () => {});
+      const assembly = new AssemblySession(engine, ui, definition, progress, audio, () => {});
+      const interaction = new InteractionSystem(engine);
+      ui.show('loading', false);
+      engine.start(dt => { assembly.update(dt); oil.update(dt); });
+      const vehicles = collectInspectableVehicles(engine);
+      const inspection = new InspectionSession(engine, new InspectionPanel(document.querySelector('#app'), () => inspection.close()), () => {}, { progress, assemblyDefinition: definition });
+      let selectedVehicle = null;
+      const selection = new VehicleSelection(engine, vehicles, vehicle => { selectedVehicle = vehicle; }, () => !inspection.active);
+      window.smoke = { engine, ui, oil, assembly, station, interaction, inspection, vehicles, selection, THREE, get selectedVehicle() { return selectedVehicle; } };
+    </script>
+  </body>
+</html>

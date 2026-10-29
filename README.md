@@ -1,72 +1,82 @@
-# SENAI Automotivo 3D
+﻿# SENAI Automotivo 3D
 
-**Oficina prática:** entre em **Mexer no carro** e escolha Roda, Filtro de ar, Bateria ou Luzes. Os novos serviços permitem abrir a caixa e substituir o filtro, conectar as duas pontas de prova e ler uma tensão simulada, além de acender faróis e testar o pisca-alerta. Clique nos alvos do carro ou use os botões de ação. O progresso dos quatro serviços fica salvo. A carroceria recebeu pintura azul-petróleo uniforme, teto curvo e acabamentos arredondados. As instruções da montagem foram reduzidas; a explicação permanece recolhida.
-
-**Revisão 03 — reconstrução por fotografias:** cobertura em duas águas com faixa zenital, laboratório com aberturas, reorganização dos setores de motores/elevadores/corredor, materiais e iluminação revistos. Consulte o [relatório de reconstrução](docs/reconstrucao-03.md) e o [mapa estimado](docs/planta-estimada.svg). Medidas e ligação entre setores ainda não foram aferidas; a fidelidade renderizada não foi validada nesta sessão.
-
-Para comparar no navegador, abra **http://localhost:5173/comparacao.html** (use a porta real informada pelo Vite). Há seis poses aproximadas, sobreposição da fotografia, ajuste de FOV e exportação de PNG/pose JSON. A exportação visual ainda precisa ser conferida em navegador. `npm run audit` gera o mapa e a auditoria estrutural sem WebGL; não produz capturas nem mede FPS.
-
-Protótipo local de ambiente virtual de aprendizagem. A oficina é uma composição **provisória**, com medidas estimadas; a bancada interativa é genérica e não uma réplica de equipamento real.
-
-**Atualização 02:** prática de montagem de roda no carro 3D, além do questionário. Clique em **Montar no carro** na tela inicial: inspecione o cubo, pegue a roda, encaixe quatro fixadores, selecione a ferramenta, aplique a sequência cruzada e confira o conjunto. Veja [guia da prática](docs/pratica-montagem.md). O carro tem painéis coloridos aproximados e capô articulado; o cenário recebeu detalhes derivados de quatro referências ampliadas.
+Simulador educativo de oficina automotiva em JavaScript, HTML, CSS, Three.js e Vite. Funciona localmente, sem backend. Ambiente e veículos exibidos são procedurais e aproximados; medidas e procedimentos precisam de revisão docente.
 
 ## Executar
 
-Requer Node.js compatível com o Vite instalado (a entrega foi compilada com Node 24.16.0) e navegador moderno com WebGL 2.
+Requer Node.js 24.16 ou versão compatível com o Vite instalado, npm e navegador com WebGL 2.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
-Abra o endereço informado pelo Vite, normalmente `http://localhost:5173/`. Se o servidor já estiver aberto, reinicie-o após a atualização da configuração.
-
-No PowerShell com bloqueio de `npm.ps1`, utilize `npm.cmd install`, `npm.cmd run dev`, `npm.cmd run build` e `npm.cmd test`. Não é necessário alterar a política de execução.
+Abra a URL informada pelo Vite. Não abra o HTML diretamente pelo explorador. No PowerShell com bloqueio de `npm.ps1`, utilize `npm.cmd` em todos os comandos.
 
 ```sh
+npm test
+npm run lint
+npm run format:check
 npm run build
 npm run preview
-npm test
 ```
 
-O build gera `dist/`. O comando de teste utiliza o executor nativo do Node sem subprocessos de isolamento. Não abra `index.html` diretamente pelo explorador de arquivos.
+O build gera `dist/`, com entradas principal e `comparacao.html`. Sirva essa pasta por HTTP. `predev` e `prebuild` copiam decodificadores locais da versão instalada de Three.js.
 
-## Primeira experiência
+ESLint verifica todo o código em src, testes, scripts e configurações. `format` e `format:check` aplicam Prettier aos módulos extraídos, testes e configuração: o estilo dos demais arquivos foi preservado para evitar mudanças apenas estéticas. ESLint e Prettier são dependências de desenvolvimento; nenhuma nova dependência de execução foi adicionada.
 
-1. Clique em **Entrar na Oficina** e permita o controle do mouse.
-2. Use WASD ou setas para caminhar, mouse para olhar e Shift para acelerar moderadamente.
-3. A bancada com morsa está no setor de motores, à frente e à direita do início. Aproxime-se e olhe para ela. Pressione **E** quando surgir a indicação.
-4. Explore as abas, destaque os três componentes e responda às duas perguntas de **Atividade**. Confira o feedback e o resultado; é possível repetir.
-5. Feche o painel e clique em **Retomar exploração**. ESC libera o cursor e pausa.
-6. A tela inicial oferece três percursos em **Atividades**: livre, visita guiada de três etapas e missão introdutória. Todos usam a mesma estação nesta versão.
+## Funcionalidades
 
-No celular, use o joystick à esquerda, arraste à direita para olhar e toque no cartão de interação. Tela cheia depende do suporte do navegador.
+**Troca manual de roda:** na janela de inspeção do carro didático, selecione a roda dianteira esquerda e escolha **Trocar roda — interação manual**. Solte os fixadores por gesto, retire a roda por arraste, alinhe/encaixe e fixe novamente nas peças 3D. Veja [passo a passo, arquivos e testes](docs/roda-manual.md).
 
-## Implementado
+**Inspeção e manutenção:** clique/toque no carro para abrir uma janela com o veículo centralizado e a oficina desfocada ao fundo. Passe o mouse nas peças para ver nome/informação e clique para abrir suas ações. No carro didático, há capô, faróis e práticas de roda, filtro, bateria e luzes na própria janela. Gire/aproxime a câmera e use **Voltar à oficina** para retornar. O renderizador é reutilizado e o fundo fica pausado. Veja [ações, limitações, configuração e testes](docs/inspecao.md).
 
-Arquitetura 3D configurável, piso procedural, paredes, caixilhos, portão fechado, teto, pilares instanciados, vigas, luminárias, tubulação decorativa e faixas de circulação. Apoios genéricos e uma bancada educativa com morsa estilizada e painel de ferramentas. Navegação em primeira pessoa com colisões, pausa, ponto inicial, configurações gráficas e áudio opcional. Registro modular, fallback de carregamento GLB e salvamento de notas/visitas/configurações em armazenamento local.
+- Oficina procedural, laboratório, equipamentos, materiais locais, batching e instanciamento.
+- Caminhada WASD/setas, mouse, Shift, colisões, pausa e toque.
+- Elevadores animados com veículos, colisão conforme altura e bloqueio de descida por ocupação.
+- Bancada educativa, destaque de componentes, quiz, visita guiada e missão.
+- Montagem de roda; filtro de ar; teste de bateria e luzes.
+- Troca de óleo com coletor móvel, ferramentas, travas e perfis didáticos Corolla Hybrid, HB20 e Gol.
+- Configurações gráficas, áudio opcional e progresso local sem cadastro.
+- Página de comparação com seis câmeras, referências e exportação manual.
+
+Entre em **Mexer no carro** para roda/filtro/bateria/luzes. Para óleo, eleve um carro, aproxime-se do cárter e pressione E. ESC pausa ou encerra a sessão conforme o estado. No celular, joystick à esquerda e arraste à direita para olhar.
+
+O suporte opcional a GLB/Draco/KTX2 e três LOD existe em VehicleFleet. **Os modelos GLB não estão presentes nem habilitados no JSON atual.** Os perfis de óleo não transformam a carroceria em réplica do fabricante. Suspensão e escapamento têm representação visual; não há atividades independentes deles nem lavagem de chassi.
 
 ## Organização
 
 ```text
 src/
-  main.js, style.css
-  core/       Engine, Controls, CollisionSystem
-  world/      Workshop, Architecture, Lighting, Materials
-  objects/    Equipment, EquipmentRegistry
-  systems/    InteractionSystem, ProgressSystem, AudioSystem
-  education/  QuizSystem
-  ui/         AppUI, EquipmentPanel, TouchControls
-public/       data/ (workshop, equipment, activities, assembly), referencias/, modelos/, texturas/, audios/, imagens/
-scripts/      auditar-cenario.mjs
-docs/         inventario-visual.md, arquitetura.md, proximas-etapas.md
-tests/        systems.test.js, scene.test.js
+  main.js          entrada mínima
+  core/            Game, Engine, GameLoop, Controls, CollisionSystem
+  graphics/        Renderer, StaticReflections
+  machines/        LiftMotion (estado sem Three.js)
+  world/           cenário, arquitetura, iluminação, materiais e lotes
+  objects/         veículos procedurais, elevadores, equipamentos e adaptadores
+  vehicles/        VehicleData, VehicleFleet, materiais, LOD e sombras
+  education/       regras de quiz, montagem, serviços e óleo
+  systems/         sessões 3D, interação, dados, progresso e áudio
+  ui/              HUD, painéis, toque e estilos de atividades
+  utils/           descarte compartilhado de recursos
+public/            data/ e referencias/
+scripts/           auditoria, decodificadores e smoke gráfico
+tests/             testes Node e fixture gráfica isolada
+docs/              arquitetura, auditoria e guias das práticas
 ```
 
-Edite `public/data/workshop.json` para dimensões, início e o objeto `reconstruction` (laboratório, pórticos, janelas, bancadas, motores, elevadores, veículos e câmeras). A planta e os testes devem ser executados novamente após mudanças. Detalhes menores e trechos de instalações mantêm coordenadas próprias nos construtores: reduzir muito a sala exige ajustá-los. Equipamentos também precisam permanecer dentro dos limites.
+## Adicionar funcionalidades
 
-## Validação e limites
+**Veículo visual:** cadastre em `src/vehicles/VehicleData.js`, disponibilize `public/models/vehicles/<id>/lod0.glb`, `lod1.glb` e `lod2.glb` e inclua uma entrada em `workshop.json.vehicles` com `model`, `position`, `rotation` e `distances` (exemplo `[0,12,28]`). Use metros, Y para cima, Z para frente e origem no piso. Frota visual não acrescenta automaticamente colisões ou manutenção. Para veículos procedurais do elevador, configure `reconstruction.lifts`; os perfis de óleo ficam em `OilChangeActivity`. Consulte [veículos](docs/veiculos-threejs.md).
 
-Consulte [registro de testes](docs/testes.md), [arquitetura](docs/arquitetura.md), [inventário](docs/inventario-visual.md) e [próximas etapas](docs/proximas-etapas.md).
+**Máquina:** equipamentos com painel usam `equipment.json` e `activities.json`; `model` opcional substitui a aparência, mantendo a colisão configurada. Para comportamento próprio, implemente adaptador com `data.id`, `anchor` (Vector3), `outline`, `setHighlight` e `update`, use `registry.attach` e conecte a ação em Game. Mantenha o estado independente da interface, como LiftMotion. Cadastrar um nome não gera a máquina real.
 
-Esta entrega não inclui máquinas reais reconstruídas, montagem de carro completo, diagnóstico avançado, backend de alunos ou réplica dimensional. O veículo procedural tem roda removível e capô articulado para uma prática introdutória. A demonstração educativa não autoriza operar equipamentos reais e exige revisão docente para adoção no curso. Sem logotipo institucional. Não há carregamento externo para funções essenciais.
+**Atividade:** implemente regras testáveis em `education/`. Para serviço sequencial simples, acrescente uma definição em `ServiceActivity.jobs` e seus alvos/apresentação na sessão. Para prática diferente, crie uma sessão em `systems/` com `update` e `dispose`, coordenando regras, câmera e UI, e conecte-a em Game. As regras das outras atividades permanecem independentes. Consulte [montagem](docs/pratica-montagem.md) e [óleo](docs/troca-de-oleo.md).
+
+## Verificação e restauração
+
+Veja [relatório completo](docs/refatoracao.md) e [arquitetura](docs/arquitetura.md). Testes CPU e navegador headless não substituem conferência visual e medição no laboratório.
+
+O smoke opcional `npm run test:browser` requer Vite na porta 5175 e Chromium com depuração na porta 9225, em perfil de teste separado. Ajuste URLs com `SMOKE_BASE_URL` e `SMOKE_DEBUG_URL`. Relatório e captura ficam em `.browser-refactor/`; a fixture não integra o build de produção.
+
+O backup anterior à refatoração, incluindo alterações locais, está registrado no relatório. Não use reset destrutivo para restaurar: já havia trabalho não commitado. Documentos históricos de reconstrução permanecem em docs como registros da época.
